@@ -1,0 +1,3 @@
+<resources>
+    <dimen name="corner_radius">@dimen/cardview_default_radius</dimen>
+</resources>
