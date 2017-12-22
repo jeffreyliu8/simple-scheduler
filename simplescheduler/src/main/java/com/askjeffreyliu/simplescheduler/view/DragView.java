@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -17,14 +18,14 @@ import com.askjeffreyliu.simplescheduler.model.Slot;
 
 public class DragView extends FrameLayout {
     private Slot slot;
-
+    private float parentWidth = 0;
     private boolean isDrawingAvailable = true;
     private FrameLayout slotArea;
     private FrameLayout visibleArea;
 
     private TextView textView;
-    private boolean isMoving = true;
-    private float oldX = 0;
+    private int virtualLeft = 0;
+    private int virtualRight = 0;
 
     public DragView(Context context, Slot slot) {
         super(context);
@@ -51,7 +52,8 @@ public class DragView extends FrameLayout {
             textView.setVisibility(GONE);
         } else {
             textView.setVisibility(VISIBLE);
-            textView.setText(slot.getStart() + " - " + slot.getEnd());
+
+            updateIndexAndText(slot.getStart(), slot.getEnd());
         }
     }
 
@@ -79,7 +81,61 @@ public class DragView extends FrameLayout {
         this.visibleArea = findViewById(R.id.visibleArea);
     }
 
+    public void setParentWidth(float parentWidth) {
+        this.parentWidth = parentWidth;
+    }
+
+    public void updateIndexAndText(int left, int right) {
+        slot.setStartEnd(left, right);
+
+        virtualLeft = slot.getStart();
+        virtualRight = slot.getEnd();
+        if (virtualLeft < 0) {
+            virtualLeft = 0;
+        }
+        if (virtualRight >= ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY) {
+            virtualRight = ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY - 1;
+        }
+
+        textView.setText(virtualLeft + " - " + virtualRight);
+    }
+
     public Slot getSlot() {
         return this.slot;
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        updateDisplayLayout();
+    }
+
+    public void updateDisplayLayout() {
+        if (getX() <= -getWidth()) {
+            // we can never drag it and make the dragger disappear on the left
+            return;
+        }
+        if (getX() >= parentWidth) {
+            // we can never drag it and make the dragger disappear on the right
+            return;
+        }
+
+//        Logger.d("get x is " + getX() + " and width is " + getWidth());
+
+        if (getX() < 0) {
+            LayoutParams params = new LayoutParams(Math.round(getWidth() + getX()), LayoutParams.MATCH_PARENT);
+            params.gravity = Gravity.RIGHT;
+            visibleArea.setLayoutParams(params);
+
+        } else if (getX() + getWidth() > parentWidth) {
+            float rightSideX = getX() + getWidth();
+//            Logger.d("right side x" + rightSideX + " " + parentWidth);
+            LayoutParams params = new LayoutParams(Math.round(getWidth() - (rightSideX - parentWidth)), LayoutParams.MATCH_PARENT);
+            params.gravity = Gravity.LEFT;
+            visibleArea.setLayoutParams(params);
+        } else {
+            LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+            visibleArea.setLayoutParams(params);
+        }
     }
 }

@@ -33,6 +33,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     private LinearLayout dragArea;
     private OnScheduleEventListener listener;
     private ArrayList<Slot> blocks = new ArrayList<>();
+    private Slot movingBlock = null;
 
     public ScheduleView(Context context) {
         super(context);
@@ -119,16 +120,19 @@ public class ScheduleView extends CardView implements ClickScrollListener {
 
     @Override
     public void onIndexScrolled(int startIndex, int endIndex) {
-        Logger.d("scrolling on" + startIndex + " " + endIndex);
+//        Logger.d("scrolling on" + startIndex + " " + endIndex);
+
+        // how big is one single slot?
+        float singleSlotWidth = (float) getWidth() / ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY;
 
         // check if the start index is starting from empty area or not
-        if (getTypeAtIndex(startIndex) == TYPE_EMPTY) {
+        int type = getTypeAtIndex(startIndex);
+        if (type == TYPE_EMPTY && movingBlock == null) {
+            Logger.d("scrolling from empty space and was not dragging");
             // set whatever drag view that we have in the drag area to be exactly from start to end
 
             Slot subSlotWithNoCommittedNorTimeOff = findSubAreaWithNoUnchangeableType(startIndex, endIndex);
 
-            // how big is one single slot?
-            float singleSlotWidth = (float) getWidth() / ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY;
             int leftIndex = Math.min(subSlotWithNoCommittedNorTimeOff.getStart(), subSlotWithNoCommittedNorTimeOff.getEnd());
             int rightIndex = Math.max(subSlotWithNoCommittedNorTimeOff.getStart(), subSlotWithNoCommittedNorTimeOff.getEnd());
 
@@ -143,6 +147,63 @@ public class ScheduleView extends CardView implements ClickScrollListener {
             dragView.setX(leftX);
             dragArea.removeAllViews(); // we might be able to use existing one instead of removing all.
             dragArea.addView(dragView);
+        } else if ((type == TYPE_AVAILABLE || type == TYPE_UNAVAILABLE) && movingBlock == null) {
+            // here the user can do 2 things, either move the whole area or extends/shrink the size
+            // determine if we are moving area or resizing
+            // if the area is only movable for now
+            // first we find which block we are trying to move base on start index
+            Slot slot = findSlotByIndex(startIndex);
+            if (slot != null) {
+                // we found the slot, we should add a drag view at the same location of this slot
+                // then remove this slot
+
+
+                if (movingBlock == null) {
+                    // save the moving block as a temp variable
+                    movingBlock = new Slot(slot);
+                } else { // was already moving the block,
+                    Logger.d("was already moving the block");
+                }
+
+
+                int moveVector = endIndex - startIndex;
+
+                int leftIndex = Math.min(movingBlock.getStart(), movingBlock.getEnd());
+                int rightIndex = Math.max(movingBlock.getStart(), movingBlock.getEnd());
+
+                int leftIndexUpdated = leftIndex + moveVector;
+                int rightIndexUpdated = rightIndex + moveVector;
+
+                float dragViewWidth = singleSlotWidth * movingBlock.size();
+
+                // where should the drag view x be? It should at least be a multiple of single slot width
+                float leftX = (leftIndex + moveVector) * singleSlotWidth;
+
+                DragView dragView = new DragView(getContext(), new Slot(leftIndexUpdated, rightIndexUpdated, movingBlock.getType()));
+                dragView.setParentWidth(getWidth());
+                dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
+                dragView.setX(leftX);
+                dragArea.removeAllViews(); // we might be able to use existing one instead of removing all.
+                dragArea.addView(dragView);
+                delete(slot);
+            }
+        } else if (movingBlock != null) {
+            // find the existing drag view
+            DragView dragView = (DragView) dragArea.getChildAt(0);
+            // just set new X
+
+            int moveVector = endIndex - startIndex;
+
+            int leftIndex = Math.min(movingBlock.getStart(), movingBlock.getEnd());
+            int rightIndex = Math.max(movingBlock.getStart(), movingBlock.getEnd());
+
+            int leftIndexUpdated = leftIndex + moveVector;
+            int rightIndexUpdated = rightIndex + moveVector;
+
+            // where should the drag view x be? It should at least be a multiple of single slot width
+            float leftX = (leftIndex + moveVector) * singleSlotWidth;
+            dragView.setX(leftX);
+            dragView.updateIndexAndText(leftIndexUpdated, rightIndexUpdated);
         }
     }
 
@@ -156,8 +217,24 @@ public class ScheduleView extends CardView implements ClickScrollListener {
 
                 ArrayList<Slot> breakDownList = createBreakDown();
 
-                for (int i = slot.getStart(); i <= slot.getEnd(); i++) {
-                    breakDownList.get(i).setType(isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE);
+                int virtualLeft = slot.getStart();
+                int virtualRight = slot.getEnd();
+                if (virtualLeft < 0) {
+                    virtualLeft = 0;
+                }
+                if (virtualRight >= NUMBER_OF_30_MINS_PER_DAY) {
+                    virtualRight = NUMBER_OF_30_MINS_PER_DAY - 1;
+                }
+
+                if (movingBlock != null) {
+                    Logger.d("on scroll end " + movingBlock.getType());
+                    for (int i = virtualLeft; i <= virtualRight; i++) {
+                        breakDownList.get(i).setType(movingBlock.getType());
+                    }
+                } else {
+                    for (int i = virtualLeft; i <= virtualRight; i++) {
+                        breakDownList.get(i).setType(isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE);
+                    }
                 }
 
                 blocks = breakDownList;
@@ -165,6 +242,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
             }
             dragArea.removeAllViews();
         }
+        movingBlock = null;
     }
 
     public void delete(Slot slot) {
@@ -225,9 +303,6 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         }
 
         blocks = result;
-        for (int i = 0; i < blocks.size(); i++) {
-            blocks.get(i).setId(i);
-        }
 
         updateUiAccordingToModel();
     }
@@ -277,7 +352,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
 
     // when start sliding from an empty area, left or right, find the largest slot within start and
     // end that doesn't overlap any committed type or time off type, if overlap, stop at the non
-    // overlapping end location
+    // overlapping end location, the return slot type doesn't matter, we only care about size
     private Slot findSubAreaWithNoUnchangeableType(int start, int end) {
         if (start < end) {
             for (int i = start; i <= end; i++) {
@@ -287,7 +362,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                     return new Slot(start, i - 1, TYPE_EMPTY);// type doesn't matter,
                 }
             }
-            return new Slot(start, end, TYPE_EMPTY);
+            return new Slot(start, end, TYPE_EMPTY);// type doesn't matter
         } else if (start > end) {
             for (int i = start; i >= end; i--) {
                 // find the block/slot at index i, which type it is
@@ -296,9 +371,19 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                     return new Slot(start, i + 1, TYPE_EMPTY);// type doesn't matter,
                 }
             }
-            return new Slot(start, end, TYPE_EMPTY);
+            return new Slot(start, end, TYPE_EMPTY);// type doesn't matter
         } else {
             return new Slot(start, end, TYPE_EMPTY);// type doesn't matter
         }
+    }
+
+    private Slot findSlotByIndex(int index) {
+        for (int i = 0; i < blocks.size(); i++) {
+            Slot slot = blocks.get(i);
+            if (slot.contains(index)) {
+                return slot;
+            }
+        }
+        return null;
     }
 }

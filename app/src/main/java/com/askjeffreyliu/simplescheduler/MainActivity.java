@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
         mondayView.setEventListener(new OnScheduleEventListener() {
             @Override
             public void onSlotClicked(final SlotView view) {
-                Logger.d(" slot clicked view " + view.getSlot().getStart() + " - " + view.getSlot().getEnd() + " id " + view.getSlot().getId());
+                Logger.d(" slot clicked view " + view.getSlot().getStart() + " - " + view.getSlot().getEnd());
                 if (view.getSlot().getType() == ScheduleConstant.TYPE_COMMITTED) {
                     AlertDialog.Builder builder;
                     builder = new AlertDialog.Builder(MainActivity.this);

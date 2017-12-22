@@ -8,46 +8,35 @@ import com.orhanobut.logger.Logger;
  */
 
 public class Slot {
-    private int id;
+
     private int start;
     private int end;
     private int type = ScheduleConstant.TYPE_EMPTY;
 
-    public Slot(int id) {
-        this.id = id;
-        this.start = id;
-        this.end = id;
+    public Slot(Slot copyFrom) {
+        this.start = copyFrom.start;
+        this.end = copyFrom.end;
+        this.type = copyFrom.type;
+    }
+
+    public Slot(int singleSlotIndex) {
+        this.start = singleSlotIndex;
+        this.end = singleSlotIndex;
         this.type = ScheduleConstant.TYPE_EMPTY;
     }
 
-    public Slot(int id, int type) {
-        this.id = id;
-        this.start = id;
-        this.end = id;
+    public Slot(int singleSlotIndex, int type) {
+        this.start = singleSlotIndex;
+        this.end = singleSlotIndex;
         this.type = type;
     }
 
     public Slot(int start, int end, int type) {
-        this.id = -1;
         this.start = start;
         this.end = end;
         this.type = type;
     }
 
-    public Slot(int id, int start, int end, int type) {
-        this.id = id;
-        this.start = start;
-        this.end = end;
-        this.type = type;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
 
     public int size() {
         return end - start + 1;
@@ -79,5 +68,10 @@ public class Slot {
 
     public boolean contains(int index) {
         return start <= index && index <= end;
+    }
+
+    public void setStartEnd(int start, int end) {
+        this.start = start;
+        this.end = end;
     }
 }
