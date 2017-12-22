@@ -4,27 +4,23 @@ import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.askjeffreyliu.simplescheduler.R;
 import com.askjeffreyliu.simplescheduler.ScheduleConstant;
-import com.askjeffreyliu.simplescheduler.listener.OnSlotViewClickListener;
 import com.askjeffreyliu.simplescheduler.model.Slot;
 
 /**
  * Created by jeff on 12/21/17.
  */
 
-public class SlotView extends FrameLayout implements View.OnClickListener {
+public class SlotView extends FrameLayout {
     private Slot slot;
 
     private boolean isDrawingAvailable = true;
     private FrameLayout slotArea;
     private TextView textView;
-    private OnSlotViewClickListener listener;
-
 
     public SlotView(Context context, Slot slot) {
         super(context);
@@ -35,15 +31,12 @@ public class SlotView extends FrameLayout implements View.OnClickListener {
         switch (slot.getType()) {
             case ScheduleConstant.TYPE_AVAILABLE:
                 slotArea.setBackgroundColor(Color.GREEN);
-                setOnClickListener(this);
                 break;
             case ScheduleConstant.TYPE_UNAVAILABLE:
                 slotArea.setBackgroundColor(Color.RED);
-                setOnClickListener(this);
                 break;
             case ScheduleConstant.TYPE_COMMITTED:
                 slotArea.setBackgroundColor(Color.BLUE);
-                setOnClickListener(this);
                 break;
             case ScheduleConstant.TYPE_TIME_OFF:
                 slotArea.setBackgroundColor(Color.GRAY);
@@ -57,18 +50,6 @@ public class SlotView extends FrameLayout implements View.OnClickListener {
             textView.setText(slot.getStart() + " - " + slot.getEnd());
         }
     }
-
-    public void setSlotClickListener(OnSlotViewClickListener listener) {
-        this.listener = listener;
-    }
-
-    @Override
-    public void onClick(View view) {
-        if (listener != null) {
-            listener.onSlotViewClicked(this);
-        }
-    }
-
 
     public SlotView(Context context) {
         super(context);

@@ -76,4 +76,8 @@ public class Slot {
     public void setTypeForce(int type) {
         this.type = type;
     }
+
+    public boolean contains(int index) {
+        return start <= index && index <= end;
+    }
 }

@@ -22,10 +22,12 @@
             android:layout_height="0dp"
             android:layout_weight="1">
 
-            <View
+            <android.support.v7.widget.SwitchCompat
+                android:id="@+id/isGreenSwitch"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:text="isAvaiable" />
 
             <com.askjeffreyliu.simplescheduler.view.ScheduleView
                 android:id="@+id/tuesdayView"

@@ -119,7 +119,7 @@ public class TouchDetectionView extends View implements GestureDetector.OnGestur
             } else if (index >= ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY) {
                 index = ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY - 1;
             }
-            listener.onEmptyIndexClicked(index);
+            listener.onIndexClicked(index);
         }
         return true;
     }

@@ -8,23 +8,28 @@ import android.util.AttributeSet;
 import android.widget.LinearLayout;
 
 import com.askjeffreyliu.simplescheduler.R;
+import com.askjeffreyliu.simplescheduler.ScheduleConstant;
 import com.askjeffreyliu.simplescheduler.listener.ClickScrollListener;
-import com.askjeffreyliu.simplescheduler.listener.OnSlotViewClickListener;
+import com.askjeffreyliu.simplescheduler.listener.OnScheduleEventListener;
 import com.askjeffreyliu.simplescheduler.model.Slot;
 import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
 
 import static com.askjeffreyliu.simplescheduler.ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY;
+import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_AVAILABLE;
+import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_EMPTY;
+import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_UNAVAILABLE;
 
 /**
  * Created by jeff on 12/21/17.
  */
 
-public class ScheduleView extends CardView implements ClickScrollListener, OnSlotViewClickListener {
-
+public class ScheduleView extends CardView implements ClickScrollListener {
+    private boolean isDrawingAvailable = true;
     private LinearLayout slotsArea;
     private TouchDetectionView detectionView;
+    private OnScheduleEventListener listener;
     private ArrayList<Slot> blocks = new ArrayList<>();
 
     public ScheduleView(Context context) {
@@ -53,8 +58,56 @@ public class ScheduleView extends CardView implements ClickScrollListener, OnSlo
     }
 
     @Override
-    public void onEmptyIndexClicked(int index) {
-        Logger.d("onEmptyIndexClicked on" + index);
+    public void onIndexClicked(int index) {
+        // find if this index is linked to a non-empty-slot
+        for (int i = 0; i < blocks.size(); i++) {
+            Slot block = blocks.get(i);
+            if (block.contains(index)) {
+                // block found, check type
+                if (block.getType() == ScheduleConstant.TYPE_EMPTY) {
+                    // add more green or red
+                    Logger.d("empty place click on" + index);
+                    addBlockOnIndex(index);
+                } else {
+                    if (listener != null) {
+                        SlotView slotView = slotsArea.findViewById(block.getStart());
+                        listener.onSlotClicked(slotView);
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    public void setDrawingMode(boolean isDrawingAvailable) {
+        this.isDrawingAvailable = isDrawingAvailable;
+    }
+
+    private void addBlockOnIndex(int index) {
+        ArrayList<Slot> breakDownList = createBreakDown();
+
+        for (int i = index; i <= index + 4; i++) {
+            if (i >= NUMBER_OF_30_MINS_PER_DAY) {
+                break;
+            }
+            if (breakDownList.get(i).getType() != TYPE_EMPTY) {
+                break;
+            }
+            breakDownList.get(i).setType(isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE);
+        }
+
+        for (int i = index - 1; i >= index - 3; i--) {
+            if (i < 0) {
+                break;
+            }
+            if (breakDownList.get(i).getType() != TYPE_EMPTY) {
+                break;
+            }
+            breakDownList.get(i).setType(isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE);
+        }
+
+        blocks = breakDownList;
+        updateModelAndUI();
     }
 
     @Override
@@ -67,14 +120,18 @@ public class ScheduleView extends CardView implements ClickScrollListener, OnSlo
         Logger.d("onIndexScrollEnd " + endIndex);
     }
 
-    @Override
-    public void onSlotViewClicked(SlotView view) {
-        Logger.d(" slot clicked view " + view.getSlot().getStart() + " - " + view.getSlot().getEnd() + " id " + view.getSlot().getId());
+    public void delete(Slot slot) {
+        slot.setType(ScheduleConstant.TYPE_EMPTY);
+        updateModelAndUI();
     }
 
     public void setSlots(ArrayList<Slot> blocks) {
         this.blocks = blocks;
         updateModelAndUI();
+    }
+
+    public void setEventListener(OnScheduleEventListener listener) {
+        this.listener = listener;
     }
 
     private ArrayList<Slot> createBreakDown() {
@@ -139,7 +196,6 @@ public class ScheduleView extends CardView implements ClickScrollListener, OnSlo
             SlotView blockView = new SlotView(getContext(), slot);
             blockView.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, slot.size()));
             blockView.setId(slot.getStart());
-            blockView.setSlotClickListener(this);
             slotsArea.addView(blockView);
         }
     }

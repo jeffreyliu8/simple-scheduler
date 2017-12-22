@@ -9,5 +9,5 @@ public interface ClickScrollListener {
 
     void onIndexScrollEnd(int endIndex);
 
-    void onEmptyIndexClicked(int index);
+    void onIndexClicked(int index);
 }
