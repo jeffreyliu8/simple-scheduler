@@ -3,6 +3,7 @@ package com.askjeffreyliu.simplescheduler.view;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -30,10 +31,10 @@ public class SlotView extends FrameLayout {
 
         switch (slot.getType()) {
             case ScheduleConstant.TYPE_AVAILABLE:
-                slotArea.setBackgroundColor(Color.GREEN);
+                slotArea.setBackgroundColor(ContextCompat.getColor(context, R.color.available_green));
                 break;
             case ScheduleConstant.TYPE_UNAVAILABLE:
-                slotArea.setBackgroundColor(Color.RED);
+                slotArea.setBackgroundColor(ContextCompat.getColor(context, R.color.unavailable_red));
                 break;
             case ScheduleConstant.TYPE_COMMITTED:
                 slotArea.setBackgroundColor(Color.BLUE);

@@ -1,11 +1,14 @@
 package com.askjeffreyliu.simplescheduler.view;
 
 import android.content.Context;
-import android.graphics.Color;
+
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.widget.FrameLayout;
+
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.askjeffreyliu.simplescheduler.R;
@@ -22,10 +25,10 @@ public class DragView extends FrameLayout {
     private boolean isDrawingAvailable = true;
     private FrameLayout slotArea;
     private FrameLayout visibleArea;
+    private ImageView leftHandle;
+    private ImageView rightHandle;
 
     private TextView textView;
-    private int virtualLeft = 0;
-    private int virtualRight = 0;
 
     public DragView(Context context, Slot slot) {
         super(context);
@@ -34,17 +37,18 @@ public class DragView extends FrameLayout {
         this.slot = slot;
 
         switch (slot.getType()) {
+            default:
             case ScheduleConstant.TYPE_AVAILABLE:
-                slotArea.setBackgroundColor(Color.GREEN);
+                slotArea.setBackgroundColor(ContextCompat.getColor(context, R.color.available_green));
+                visibleArea.setBackgroundResource(R.drawable.drag_view_border_green);
+                leftHandle.setImageResource(R.drawable.drag_bar_green);
+                rightHandle.setImageResource(R.drawable.drag_bar_green);
                 break;
             case ScheduleConstant.TYPE_UNAVAILABLE:
-                slotArea.setBackgroundColor(Color.RED);
-                break;
-            case ScheduleConstant.TYPE_COMMITTED:
-                slotArea.setBackgroundColor(Color.BLUE);
-                break;
-            case ScheduleConstant.TYPE_TIME_OFF:
-                slotArea.setBackgroundColor(Color.GRAY);
+                slotArea.setBackgroundColor(ContextCompat.getColor(context, R.color.unavailable_red));
+                visibleArea.setBackgroundResource(R.drawable.drag_view_border_red);
+                leftHandle.setImageResource(R.drawable.drag_bar_red);
+                rightHandle.setImageResource(R.drawable.drag_bar_red);
                 break;
         }
 
@@ -76,9 +80,11 @@ public class DragView extends FrameLayout {
     private void init() {
         inflate(getContext(), R.layout.day_schedule_drag_view, this);
 
-        this.slotArea = findViewById(R.id.blockBox);
-        this.textView = findViewById(R.id.text);
-        this.visibleArea = findViewById(R.id.visibleArea);
+        slotArea = findViewById(R.id.blockBox);
+        textView = findViewById(R.id.text);
+        visibleArea = findViewById(R.id.visibleArea);
+        leftHandle = findViewById(R.id.leftHandle);
+        rightHandle = findViewById(R.id.rightHandle);
     }
 
     public void setParentWidth(float parentWidth) {
@@ -88,8 +94,8 @@ public class DragView extends FrameLayout {
     public void updateIndexAndText(int left, int right) {
         slot.setStartEnd(left, right);
 
-        virtualLeft = slot.getStart();
-        virtualRight = slot.getEnd();
+        int virtualLeft = slot.getStart();
+        int virtualRight = slot.getEnd();
         if (virtualLeft < 0) {
             virtualLeft = 0;
         }
