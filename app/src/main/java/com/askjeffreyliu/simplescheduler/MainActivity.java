@@ -41,10 +41,10 @@ public class MainActivity extends AppCompatActivity {
         slots.get(2).setTypeForce(ScheduleConstant.TYPE_UNAVAILABLE);
         slots.get(3).setTypeForce(ScheduleConstant.TYPE_COMMITTED);
 
-        slots.get(4).setTypeForce(ScheduleConstant.TYPE_AVAILABLE);
-        slots.get(5).setTypeForce(ScheduleConstant.TYPE_AVAILABLE);
-        slots.get(6).setTypeForce(ScheduleConstant.TYPE_AVAILABLE);
-        slots.get(7).setTypeForce(ScheduleConstant.TYPE_AVAILABLE);
+        slots.get(4).setTypeForce(ScheduleConstant.TYPE_TIME_OFF);
+        slots.get(5).setTypeForce(ScheduleConstant.TYPE_TIME_OFF);
+        slots.get(6).setTypeForce(ScheduleConstant.TYPE_TIME_OFF);
+        slots.get(7).setTypeForce(ScheduleConstant.TYPE_TIME_OFF);
 
         slots.get(16).setTypeForce(ScheduleConstant.TYPE_UNAVAILABLE);
         slots.get(17).setTypeForce(ScheduleConstant.TYPE_UNAVAILABLE);

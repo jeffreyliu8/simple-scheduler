@@ -18,7 +18,9 @@ import java.util.ArrayList;
 
 import static com.askjeffreyliu.simplescheduler.ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY;
 import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_AVAILABLE;
+import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_COMMITTED;
 import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_EMPTY;
+import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_TIME_OFF;
 import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_UNAVAILABLE;
 
 /**
@@ -118,23 +120,30 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     @Override
     public void onIndexScrolled(int startIndex, int endIndex) {
         Logger.d("scrolling on" + startIndex + " " + endIndex);
-        // set whatever drag view that we have in the drag area to be exactly from start to end
-        dragArea.removeAllViews();
 
-        // how big is one single slot?
-        float singleSlotWidth = (float) getWidth() / ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY;
-        int leftIndex = Math.min(startIndex, endIndex);
-        int rightIndex = Math.max(startIndex, endIndex);
-        float dragViewWidth = singleSlotWidth * (rightIndex - leftIndex + 1);
+        // check if the start index is starting from empty area or not
+        if (getTypeAtIndex(startIndex) == TYPE_EMPTY) {
+            // set whatever drag view that we have in the drag area to be exactly from start to end
 
-        // where should the drag view x be? It should at least be a multiple of single slot width
-        float leftX = leftIndex * singleSlotWidth;
+            Slot subSlotWithNoCommittedNorTimeOff = findSubAreaWithNoUnchangeableType(startIndex, endIndex);
 
-        Logger.d("single slot width is " + singleSlotWidth + "  " + dragViewWidth);
-        DragView dragView = new DragView(getContext(), new Slot(leftIndex, rightIndex, isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE));
-        dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
-        dragView.setX(leftX);
-        dragArea.addView(dragView);
+            // how big is one single slot?
+            float singleSlotWidth = (float) getWidth() / ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY;
+            int leftIndex = Math.min(subSlotWithNoCommittedNorTimeOff.getStart(), subSlotWithNoCommittedNorTimeOff.getEnd());
+            int rightIndex = Math.max(subSlotWithNoCommittedNorTimeOff.getStart(), subSlotWithNoCommittedNorTimeOff.getEnd());
+
+
+            float dragViewWidth = singleSlotWidth * (rightIndex - leftIndex + 1);
+
+            // where should the drag view x be? It should at least be a multiple of single slot width
+            float leftX = leftIndex * singleSlotWidth;
+
+            DragView dragView = new DragView(getContext(), new Slot(leftIndex, rightIndex, isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE));
+            dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
+            dragView.setX(leftX);
+            dragArea.removeAllViews(); // we might be able to use existing one instead of removing all.
+            dragArea.addView(dragView);
+        }
     }
 
     @Override
@@ -253,5 +262,43 @@ public class ScheduleView extends CardView implements ClickScrollListener {
             end++;
         }
         return new Slot(start, end, type);
+    }
+
+
+    private int getTypeAtIndex(int index) {
+        for (int i = 0; i < blocks.size(); i++) {
+            Slot slot = blocks.get(i);
+            if (slot.contains(index)) {
+                return slot.getType();
+            }
+        }
+        return TYPE_EMPTY;
+    }
+
+    // when start sliding from an empty area, left or right, find the largest slot within start and
+    // end that doesn't overlap any committed type or time off type, if overlap, stop at the non
+    // overlapping end location
+    private Slot findSubAreaWithNoUnchangeableType(int start, int end) {
+        if (start < end) {
+            for (int i = start; i <= end; i++) {
+                // find the block/slot at index i, which type it is
+                int type = getTypeAtIndex(i);
+                if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
+                    return new Slot(start, i - 1, TYPE_EMPTY);// type doesn't matter,
+                }
+            }
+            return new Slot(start, end, TYPE_EMPTY);
+        } else if (start > end) {
+            for (int i = start; i >= end; i--) {
+                // find the block/slot at index i, which type it is
+                int type = getTypeAtIndex(i);
+                if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
+                    return new Slot(start, i + 1, TYPE_EMPTY);// type doesn't matter,
+                }
+            }
+            return new Slot(start, end, TYPE_EMPTY);
+        } else {
+            return new Slot(start, end, TYPE_EMPTY);// type doesn't matter
+        }
     }
 }
