@@ -78,7 +78,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                     Logger.d("slot clicked");
                     if (listener != null) {
                         SlotView slotView = slotsArea.findViewById(block.getStart());
-                        listener.onSlotClicked(slotView);
+                        listener.onSlotClicked(slotView, ScheduleView.this);
                     }
                 }
                 return;

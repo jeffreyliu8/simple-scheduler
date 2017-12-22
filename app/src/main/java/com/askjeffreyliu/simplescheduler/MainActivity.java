@@ -20,7 +20,7 @@ import java.util.ArrayList;
 
 import static com.askjeffreyliu.simplescheduler.ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnScheduleEventListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,8 +28,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Logger.addLogAdapter(new AndroidLogAdapter());
 
-        final ScheduleView mondayView = findViewById(R.id.mondayView);
 
+        final ScheduleView mondayView = findViewById(R.id.mondayView);
+        final ScheduleView tuesdayView = findViewById(R.id.tuesdayView);
 
         ArrayList<Slot> slots = new ArrayList<>();
         for (int i = 0; i < NUMBER_OF_30_MINS_PER_DAY; i++) {
@@ -60,46 +61,47 @@ public class MainActivity extends AppCompatActivity {
         slots.get(38).setTypeForce(ScheduleConstant.TYPE_AVAILABLE);
 
         mondayView.setSlots(slots);
-        mondayView.setEventListener(new OnScheduleEventListener() {
-            @Override
-            public void onSlotClicked(final SlotView view) {
-                Logger.d(" slot clicked view " + view.getSlot().getStart() + " - " + view.getSlot().getEnd());
-                if (view.getSlot().getType() == ScheduleConstant.TYPE_COMMITTED) {
-                    AlertDialog.Builder builder;
-                    builder = new AlertDialog.Builder(MainActivity.this);
-                    builder.setTitle("Committed hour")
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .show();
-                    return;
-                }
-                AlertDialog.Builder builder;
-                builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setTitle("Delete entry")
-                        .setMessage("Are you sure you want to delete this entry?")
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                mondayView.delete(view.getSlot());
-                            }
-                        })
-                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                // do nothing
-                            }
-                        })
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .show();
-
-            }
-        });
-
+        mondayView.setEventListener(this);
+        tuesdayView.setEventListener(this);
 
         SwitchCompat isGreenOrRedSwitch = findViewById(R.id.isGreenSwitch);
         mondayView.setDrawingMode(isGreenOrRedSwitch.isChecked());
+        tuesdayView.setDrawingMode(isGreenOrRedSwitch.isChecked());
         isGreenOrRedSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 mondayView.setDrawingMode(b);
+                tuesdayView.setDrawingMode(b);
             }
         });
+    }
+
+    @Override
+    public void onSlotClicked(final SlotView view, final ScheduleView scheduleView) {
+        Logger.d(" slot clicked view " + view.getSlot().getStart() + " - " + view.getSlot().getEnd());
+        if (view.getSlot().getType() == ScheduleConstant.TYPE_COMMITTED) {
+            AlertDialog.Builder builder;
+            builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setTitle("Committed hour")
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+            return;
+        }
+        AlertDialog.Builder builder;
+        builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("Delete entry")
+                .setMessage("Are you sure you want to delete this entry?")
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        scheduleView.delete(view.getSlot());
+                    }
+                })
+                .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // do nothing
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 }

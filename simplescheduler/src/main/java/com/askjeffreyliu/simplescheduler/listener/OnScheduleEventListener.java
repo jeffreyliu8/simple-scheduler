@@ -1,6 +1,7 @@
 package com.askjeffreyliu.simplescheduler.listener;
 
 
+import com.askjeffreyliu.simplescheduler.view.ScheduleView;
 import com.askjeffreyliu.simplescheduler.view.SlotView;
 
 /**
@@ -8,5 +9,5 @@ import com.askjeffreyliu.simplescheduler.view.SlotView;
  */
 
 public interface OnScheduleEventListener {
-    void onSlotClicked(SlotView view);
+    void onSlotClicked(SlotView slotView, ScheduleView scheduleView);
 }
