@@ -60,15 +60,19 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     @Override
     public void onIndexClicked(int index) {
         // find if this index is linked to a non-empty-slot
+        if (blocks.size() == 0) {
+            addBlockOnIndex(index);
+            return;
+        }
+
         for (int i = 0; i < blocks.size(); i++) {
             Slot block = blocks.get(i);
             if (block.contains(index)) {
                 // block found, check type
                 if (block.getType() == ScheduleConstant.TYPE_EMPTY) {
-                    // add more green or red
-                    Logger.d("empty place click on" + index);
                     addBlockOnIndex(index);
                 } else {
+                    Logger.d("slot clicked");
                     if (listener != null) {
                         SlotView slotView = slotsArea.findViewById(block.getStart());
                         listener.onSlotClicked(slotView);
@@ -84,6 +88,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     }
 
     private void addBlockOnIndex(int index) {
+        Logger.d("empty place click on" + index);
         ArrayList<Slot> breakDownList = createBreakDown();
 
         for (int i = index; i <= index + 4; i++) {
@@ -137,17 +142,22 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     private ArrayList<Slot> createBreakDown() {
         // break down the original list to 48 pieces
         ArrayList<Slot> temp = new ArrayList<>();
-
-        for (int i = 0; i < blocks.size(); i++) {
-            Slot slot = blocks.get(i);
-
-
-            for (int j = 0; j < slot.size(); j++) {
-                temp.add(new Slot(i + j, slot.getType()));
+        if (blocks.size() == 0) {
+            for (int i = 0; i < NUMBER_OF_30_MINS_PER_DAY; i++) {
+                temp.add(new Slot(i));
+            }
+        } else {
+            for (int i = 0; i < blocks.size(); i++) {
+                Slot slot = blocks.get(i);
+                for (int j = 0; j < slot.size(); j++) {
+                    temp.add(new Slot(i + j, slot.getType()));
+                }
             }
         }
 
-
+        if (temp.size() != ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY) {
+            Logger.e("error on breaking down!");
+        }
         return temp;
     }
 
