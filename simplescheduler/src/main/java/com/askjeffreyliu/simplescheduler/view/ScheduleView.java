@@ -128,7 +128,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         // check if the start index is starting from empty area or not
         int type = getTypeAtIndex(startIndex);
         if (type == TYPE_EMPTY && movingBlock == null) {
-            Logger.d("scrolling from empty space and was not dragging");
+//            Logger.d("scrolling from empty space and was not dragging");
             // set whatever drag view that we have in the drag area to be exactly from start to end
 
             Slot subSlotWithNoCommittedNorTimeOff = findSubAreaWithNoUnchangeableType(startIndex, endIndex);
@@ -174,6 +174,32 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                 int leftIndexUpdated = leftIndex + moveVector;
                 int rightIndexUpdated = rightIndex + moveVector;
 
+
+                // check if we would hit any stopping block like committed/time off
+                if (moveVector > 0) {
+                    int firstStoppingIndexGoingRight = findFirstIndexOfStoppingBlock(rightIndex, rightIndexUpdated);
+                    if (firstStoppingIndexGoingRight != -1) {
+                        // we hit a wall, stop before this location
+                        moveVector = firstStoppingIndexGoingRight - rightIndex - 1;
+
+                        leftIndexUpdated = leftIndex + moveVector;
+                        rightIndexUpdated = rightIndex + moveVector;
+
+                        Logger.d("we hit right wall at index " + firstStoppingIndexGoingRight);
+                    }
+                } else if (moveVector < 0) {
+                    int firstStoppingIndexGoingLeft = findFirstIndexOfStoppingBlock(leftIndex, leftIndexUpdated);
+                    if (firstStoppingIndexGoingLeft != -1) {
+                        // we hit a wall, stop before this location
+                        moveVector = firstStoppingIndexGoingLeft - leftIndex + 1;
+
+                        leftIndexUpdated = leftIndex + moveVector;
+                        rightIndexUpdated = rightIndex + moveVector;
+
+                        Logger.d("we hit left wall at index " + firstStoppingIndexGoingLeft);
+                    }
+                }
+
                 float dragViewWidth = singleSlotWidth * movingBlock.size();
 
                 // where should the drag view x be? It should at least be a multiple of single slot width
@@ -185,6 +211,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                 dragView.setX(leftX);
                 dragArea.removeAllViews(); // we might be able to use existing one instead of removing all.
                 dragArea.addView(dragView);
+                dragView.updateDisplayLayout();
                 delete(slot);
             }
         } else if (movingBlock != null) {
@@ -200,10 +227,37 @@ public class ScheduleView extends CardView implements ClickScrollListener {
             int leftIndexUpdated = leftIndex + moveVector;
             int rightIndexUpdated = rightIndex + moveVector;
 
+
+            // check if we would hit any stopping block like committed/time off
+            if (moveVector > 0) {
+                int firstStoppingIndexGoingRight = findFirstIndexOfStoppingBlock(rightIndex, rightIndexUpdated);
+                if (firstStoppingIndexGoingRight != -1) {
+                    // we hit a wall, stop before this location
+                    moveVector = firstStoppingIndexGoingRight - rightIndex - 1;
+
+                    leftIndexUpdated = leftIndex + moveVector;
+                    rightIndexUpdated = rightIndex + moveVector;
+
+                    Logger.d("we hit right wall at index " + firstStoppingIndexGoingRight);
+                }
+            } else if (moveVector < 0) {
+                int firstStoppingIndexGoingLeft = findFirstIndexOfStoppingBlock(leftIndex, leftIndexUpdated);
+                if (firstStoppingIndexGoingLeft != -1) {
+                    // we hit a wall, stop before this location
+                    moveVector = firstStoppingIndexGoingLeft - leftIndex + 1;
+
+                    leftIndexUpdated = leftIndex + moveVector;
+                    rightIndexUpdated = rightIndex + moveVector;
+
+                    Logger.d("we hit left wall at index " + firstStoppingIndexGoingLeft);
+                }
+            }
+
             // where should the drag view x be? It should at least be a multiple of single slot width
             float leftX = (leftIndex + moveVector) * singleSlotWidth;
             dragView.setX(leftX);
             dragView.updateIndexAndText(leftIndexUpdated, rightIndexUpdated);
+            dragView.updateDisplayLayout();
         }
     }
 
@@ -227,7 +281,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                 }
 
                 if (movingBlock != null) {
-                    Logger.d("on scroll end " + movingBlock.getType());
+//                    Logger.d("on scroll end " + movingBlock.getType());
                     for (int i = virtualLeft; i <= virtualRight; i++) {
                         breakDownList.get(i).setType(movingBlock.getType());
                     }
@@ -385,5 +439,25 @@ public class ScheduleView extends CardView implements ClickScrollListener {
             }
         }
         return null;
+    }
+
+    // if -1, non has been found
+    private int findFirstIndexOfStoppingBlock(int start, int end) {
+        if (start < end) {
+            for (int i = start; i <= end; i++) {
+                int type = getTypeAtIndex(i);
+                if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
+                    return i;
+                }
+            }
+        } else if (start > end) {
+            for (int i = start; i >= end; i--) {
+                int type = getTypeAtIndex(i);
+                if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 }

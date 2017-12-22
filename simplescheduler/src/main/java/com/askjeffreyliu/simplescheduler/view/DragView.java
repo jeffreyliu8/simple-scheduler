@@ -104,12 +104,6 @@ public class DragView extends FrameLayout {
         return this.slot;
     }
 
-    @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        super.onLayout(changed, left, top, right, bottom);
-        updateDisplayLayout();
-    }
-
     public void updateDisplayLayout() {
         if (getX() <= -getWidth()) {
             // we can never drag it and make the dragger disappear on the left
@@ -137,5 +131,6 @@ public class DragView extends FrameLayout {
             LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
             visibleArea.setLayoutParams(params);
         }
+        requestLayout();
     }
 }
