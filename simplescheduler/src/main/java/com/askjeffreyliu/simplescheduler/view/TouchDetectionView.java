@@ -23,6 +23,10 @@ public class TouchDetectionView extends View implements GestureDetector.OnGestur
 
     private GestureDetectorCompat mDetector;
     private ClickScrollListener listener;
+    private boolean isScrolling = false;
+
+    private int startIndex;
+    private int endIndex;
 
     public TouchDetectionView(Context context) {
         super(context);
@@ -51,7 +55,14 @@ public class TouchDetectionView extends View implements GestureDetector.OnGestur
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return this.mDetector.onTouchEvent(event);
+        boolean isDetect = this.mDetector.onTouchEvent(event);
+        if (isScrolling && event.getAction() == MotionEvent.ACTION_UP) {
+            isScrolling = false;
+            if (listener != null) {
+                listener.onIndexScrollEnd(startIndex, endIndex);
+            }
+        }
+        return isDetect;
     }
 
     @Override
@@ -72,15 +83,21 @@ public class TouchDetectionView extends View implements GestureDetector.OnGestur
     @Override
     public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX,
                             float distanceY) {
+        boolean isStartScrolling = false;
+        if (!isScrolling) {
+            // just started scrolling, should notify the view to start remove the old slot view
+            isStartScrolling = true;
+        }
+        isScrolling = true;
         if (listener != null) {
-            int startIndex = findIndexByX(event1.getX());
-            int endIndex = findIndexByX(event2.getX());
+            startIndex = findIndexByX(event1.getX());
+            endIndex = findIndexByX(event2.getX());
             if (endIndex < 0) {
                 endIndex = 0;
             } else if (endIndex >= ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY) {
                 endIndex = ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY - 1;
             }
-            listener.onIndexScrolled(startIndex, endIndex, false);
+            listener.onIndexScrolled(startIndex, endIndex, isStartScrolling);
         }
         return true;
     }

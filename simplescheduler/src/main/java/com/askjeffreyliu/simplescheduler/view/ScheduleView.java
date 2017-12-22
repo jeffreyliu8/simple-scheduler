@@ -117,12 +117,16 @@ public class ScheduleView extends CardView implements ClickScrollListener {
 
     @Override
     public void onIndexScrolled(int startIndex, int endIndex, boolean isStartScrolling) {
-        Logger.d("onIndexScrolled on" + startIndex + " " + endIndex);
+        if (isStartScrolling) {
+            Logger.d("scroll start on" + startIndex + " " + endIndex);
+        } else {
+            Logger.d("scolling on" + startIndex + " " + endIndex);
+        }
     }
 
     @Override
-    public void onIndexScrollEnd(int endIndex) {
-        Logger.d("onIndexScrollEnd " + endIndex);
+    public void onIndexScrollEnd(int startIndex, int endIndex) {
+        Logger.d("onIndexScrollEnd " + startIndex + " " + endIndex);
     }
 
     public void delete(Slot slot) {
@@ -191,7 +195,6 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     }
 
     private void updateUiAccordingToModel() {
-
         // remove all the view listener
         for (int i = 0; i < slotsArea.getChildCount(); i++) {
             SlotView slotView = (SlotView) slotsArea.getChildAt(i);
