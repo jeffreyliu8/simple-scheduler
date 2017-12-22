@@ -66,7 +66,7 @@ public class Slot {
     }
 
     public void setType(int type) {
-        if (this.type == ScheduleConstant.TYPE_COMMITTED) {
+        if (this.type == ScheduleConstant.TYPE_COMMITTED || this.type == ScheduleConstant.TYPE_TIME_OFF) {
             Logger.d("cannot update type on committed");
             return;
         }

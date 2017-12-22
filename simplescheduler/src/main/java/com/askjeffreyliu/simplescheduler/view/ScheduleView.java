@@ -28,7 +28,7 @@ import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_UNAVAILABL
 public class ScheduleView extends CardView implements ClickScrollListener {
     private boolean isDrawingAvailable = true;
     private LinearLayout slotsArea;
-    private TouchDetectionView detectionView;
+    private LinearLayout dragArea;
     private OnScheduleEventListener listener;
     private ArrayList<Slot> blocks = new ArrayList<>();
 
@@ -50,11 +50,11 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     private void init() {
         inflate(getContext(), R.layout.schedule_view, this);
         this.slotsArea = findViewById(R.id.slotsArea);
-        this.detectionView = findViewById(R.id.detection);
+        this.dragArea = findViewById(R.id.dragArea);
+        TouchDetectionView detectionView = findViewById(R.id.detection);
         detectionView.setListener(this);
 
         this.setRadius(getContext().getResources().getDimensionPixelSize(R.dimen.corner_radius));
-//        this.dragAndSlideArea = findViewById(R.id.dragAndSlideArea);
     }
 
     @Override
@@ -116,17 +116,46 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     }
 
     @Override
-    public void onIndexScrolled(int startIndex, int endIndex, boolean isStartScrolling) {
-        if (isStartScrolling) {
-            Logger.d("scroll start on" + startIndex + " " + endIndex);
-        } else {
-            Logger.d("scolling on" + startIndex + " " + endIndex);
-        }
+    public void onIndexScrolled(int startIndex, int endIndex) {
+        Logger.d("scrolling on" + startIndex + " " + endIndex);
+        // set whatever drag view that we have in the drag area to be exactly from start to end
+        dragArea.removeAllViews();
+
+        // how big is one single slot?
+        float singleSlotWidth = (float) getWidth() / ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY;
+        int leftIndex = Math.min(startIndex, endIndex);
+        int rightIndex = Math.max(startIndex, endIndex);
+        float dragViewWidth = singleSlotWidth * (rightIndex - leftIndex + 1);
+
+        // where should the drag view x be? It should at least be a multiple of single slot width
+        float leftX = leftIndex * singleSlotWidth;
+
+        Logger.d("single slot width is " + singleSlotWidth + "  " + dragViewWidth);
+        DragView dragView = new DragView(getContext(), new Slot(leftIndex, rightIndex, isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE));
+        dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
+        dragView.setX(leftX);
+        dragArea.addView(dragView);
     }
 
     @Override
     public void onIndexScrollEnd(int startIndex, int endIndex) {
-        Logger.d("onIndexScrollEnd " + startIndex + " " + endIndex);
+        if (dragArea != null) {
+            if (dragArea.getChildCount() == 1) {
+                DragView dragView = (DragView) dragArea.getChildAt(0);
+                Slot slot = dragView.getSlot();
+                // add this slot
+
+                ArrayList<Slot> breakDownList = createBreakDown();
+
+                for (int i = slot.getStart(); i <= slot.getEnd(); i++) {
+                    breakDownList.get(i).setType(isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE);
+                }
+
+                blocks = breakDownList;
+                updateModelAndUI();
+            }
+            dragArea.removeAllViews();
+        }
     }
 
     public void delete(Slot slot) {

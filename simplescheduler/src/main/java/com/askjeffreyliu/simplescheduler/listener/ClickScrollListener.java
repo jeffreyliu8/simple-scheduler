@@ -5,7 +5,7 @@ package com.askjeffreyliu.simplescheduler.listener;
  */
 
 public interface ClickScrollListener {
-    void onIndexScrolled(int startIndex, int endIndex, boolean isStartScrolling);
+    void onIndexScrolled(int startIndex, int endIndex);
 
     void onIndexScrollEnd(int startIndex, int endIndex);
 

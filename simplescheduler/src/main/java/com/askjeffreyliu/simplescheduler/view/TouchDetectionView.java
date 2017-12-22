@@ -83,11 +83,6 @@ public class TouchDetectionView extends View implements GestureDetector.OnGestur
     @Override
     public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX,
                             float distanceY) {
-        boolean isStartScrolling = false;
-        if (!isScrolling) {
-            // just started scrolling, should notify the view to start remove the old slot view
-            isStartScrolling = true;
-        }
         isScrolling = true;
         if (listener != null) {
             startIndex = findIndexByX(event1.getX());
@@ -97,7 +92,7 @@ public class TouchDetectionView extends View implements GestureDetector.OnGestur
             } else if (endIndex >= ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY) {
                 endIndex = ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY - 1;
             }
-            listener.onIndexScrolled(startIndex, endIndex, isStartScrolling);
+            listener.onIndexScrolled(startIndex, endIndex);
         }
         return true;
     }

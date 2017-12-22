@@ -47,14 +47,12 @@
         android:orientation="horizontal"
         android:weightSum="48" />
 
-    <!--&lt;!&ndash;when you drag any non-commited area&ndash;&gt;-->
-    <!--<LinearLayout-->
-    <!--android:id="@+id/dragAndSlideArea"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:orientation="horizontal"-->
-    <!--android:weightSum="48" />-->
-
+    <LinearLayout
+        android:id="@+id/dragArea"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:weightSum="48" />
 
     <!--this must be the last item-->
     <FrameLayout
