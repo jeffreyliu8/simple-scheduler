@@ -30,10 +30,10 @@ public class MainActivity extends AppCompatActivity {
             slots.add(new Slot(i));
         }
 //
-//        slots.get(0).setTypeForce(ScheduleConstant.TYPE_COMMITTED);
-//        slots.get(1).setTypeForce(ScheduleConstant.TYPE_COMMITTED);
-//        slots.get(2).setTypeForce(ScheduleConstant.TYPE_COMMITTED);
-//        slots.get(3).setTypeForce(ScheduleConstant.TYPE_COMMITTED);
+        slots.get(0).setTypeForce(ScheduleConstant.TYPE_COMMITTED);
+        slots.get(1).setTypeForce(ScheduleConstant.TYPE_AVAILABLE);
+        slots.get(2).setTypeForce(ScheduleConstant.TYPE_UNAVAILABLE);
+        slots.get(3).setTypeForce(ScheduleConstant.TYPE_COMMITTED);
 
         slots.get(4).setTypeForce(ScheduleConstant.TYPE_AVAILABLE);
         slots.get(5).setTypeForce(ScheduleConstant.TYPE_AVAILABLE);

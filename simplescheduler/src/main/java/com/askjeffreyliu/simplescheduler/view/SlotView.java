@@ -4,24 +4,26 @@ import android.content.Context;
 import android.graphics.Color;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.askjeffreyliu.simplescheduler.R;
 import com.askjeffreyliu.simplescheduler.ScheduleConstant;
+import com.askjeffreyliu.simplescheduler.listener.OnSlotViewClickListener;
 import com.askjeffreyliu.simplescheduler.model.Slot;
 
 /**
  * Created by jeff on 12/21/17.
  */
 
-public class SlotView extends FrameLayout {
+public class SlotView extends FrameLayout implements View.OnClickListener {
     private Slot slot;
 
     private boolean isDrawingAvailable = true;
     private FrameLayout slotArea;
     private TextView textView;
+    private OnSlotViewClickListener listener;
 
 
     public SlotView(Context context, Slot slot) {
@@ -33,12 +35,15 @@ public class SlotView extends FrameLayout {
         switch (slot.getType()) {
             case ScheduleConstant.TYPE_AVAILABLE:
                 slotArea.setBackgroundColor(Color.GREEN);
+                setOnClickListener(this);
                 break;
             case ScheduleConstant.TYPE_UNAVAILABLE:
                 slotArea.setBackgroundColor(Color.RED);
+                setOnClickListener(this);
                 break;
             case ScheduleConstant.TYPE_COMMITTED:
                 slotArea.setBackgroundColor(Color.BLUE);
+                setOnClickListener(this);
                 break;
             case ScheduleConstant.TYPE_TIME_OFF:
                 slotArea.setBackgroundColor(Color.GRAY);
@@ -53,36 +58,14 @@ public class SlotView extends FrameLayout {
         }
     }
 
-    public SlotView(Context context, Slot slot, boolean isDraggerMode) {
-        super(context);
-        init();
+    public void setSlotClickListener(OnSlotViewClickListener listener) {
+        this.listener = listener;
+    }
 
-        this.slot = slot;
-
-        switch (slot.getType()) {
-            case ScheduleConstant.TYPE_AVAILABLE:
-                slotArea.setBackgroundColor(Color.GREEN);
-                break;
-            case ScheduleConstant.TYPE_UNAVAILABLE:
-                slotArea.setBackgroundColor(Color.RED);
-                break;
-            case ScheduleConstant.TYPE_COMMITTED:
-                slotArea.setBackgroundColor(Color.BLUE);
-                break;
-            case ScheduleConstant.TYPE_TIME_OFF:
-                slotArea.setBackgroundColor(Color.GRAY);
-                break;
-        }
-
-        if (slot.getType() == ScheduleConstant.TYPE_EMPTY) {
-            textView.setVisibility(GONE);
-        } else {
-            textView.setVisibility(VISIBLE);
-            textView.setText(slot.getStart() + " - " + slot.getEnd());
-
-            if (isDraggerMode) {
-                slotArea.setBackgroundColor(Color.BLACK);
-            }
+    @Override
+    public void onClick(View view) {
+        if (listener != null) {
+            listener.onSlotViewClicked(this);
         }
     }
 
@@ -110,8 +93,7 @@ public class SlotView extends FrameLayout {
         this.textView = findViewById(R.id.text);
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        return false;
+    public Slot getSlot() {
+        return this.slot;
     }
 }

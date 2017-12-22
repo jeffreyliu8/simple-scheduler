@@ -13,16 +13,28 @@
         <com.askjeffreyliu.simplescheduler.view.ScheduleView
             android:id="@+id/mondayView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:layout_margin="8dp"
             android:layout_weight="1" />
 
-        <com.askjeffreyliu.simplescheduler.view.ScheduleView
-            android:id="@+id/tuesdayView"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:layout_weight="1" />
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <com.askjeffreyliu.simplescheduler.view.ScheduleView
+                android:id="@+id/tuesdayView"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="8dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+
 
         <!--<com.askjeffreyliu.simplescheduler.view.SchedulerView-->
         <!--android:id="@+id/wednesdayView"-->

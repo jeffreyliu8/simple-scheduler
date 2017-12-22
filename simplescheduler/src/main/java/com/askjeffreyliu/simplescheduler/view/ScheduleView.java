@@ -8,7 +8,10 @@ import android.util.AttributeSet;
 import android.widget.LinearLayout;
 
 import com.askjeffreyliu.simplescheduler.R;
+import com.askjeffreyliu.simplescheduler.listener.ClickScrollListener;
+import com.askjeffreyliu.simplescheduler.listener.OnSlotViewClickListener;
 import com.askjeffreyliu.simplescheduler.model.Slot;
+import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
 
@@ -18,9 +21,10 @@ import static com.askjeffreyliu.simplescheduler.ScheduleConstant.NUMBER_OF_30_MI
  * Created by jeff on 12/21/17.
  */
 
-public class ScheduleView extends CardView {
+public class ScheduleView extends CardView implements ClickScrollListener, OnSlotViewClickListener {
 
     private LinearLayout slotsArea;
+    private TouchDetectionView detectionView;
     private ArrayList<Slot> blocks = new ArrayList<>();
 
     public ScheduleView(Context context) {
@@ -41,10 +45,31 @@ public class ScheduleView extends CardView {
     private void init() {
         inflate(getContext(), R.layout.schedule_view, this);
         this.slotsArea = findViewById(R.id.slotsArea);
-
+        this.detectionView = findViewById(R.id.detection);
+        detectionView.setListener(this);
 
         this.setRadius(getContext().getResources().getDimensionPixelSize(R.dimen.corner_radius));
 //        this.dragAndSlideArea = findViewById(R.id.dragAndSlideArea);
+    }
+
+    @Override
+    public void onEmptyIndexClicked(int index) {
+        Logger.d("onEmptyIndexClicked on" + index);
+    }
+
+    @Override
+    public void onIndexScrolled(int startIndex, int endIndex, boolean isStartScrolling) {
+        Logger.d("onIndexScrolled on" + startIndex + " " + endIndex);
+    }
+
+    @Override
+    public void onIndexScrollEnd(int endIndex) {
+        Logger.d("onIndexScrollEnd " + endIndex);
+    }
+
+    @Override
+    public void onSlotViewClicked(SlotView view) {
+        Logger.d(" slot clicked view " + view.getSlot().getStart() + " - " + view.getSlot().getEnd() + " id " + view.getSlot().getId());
     }
 
     public void setSlots(ArrayList<Slot> blocks) {
@@ -99,12 +124,22 @@ public class ScheduleView extends CardView {
     }
 
     private void updateUiAccordingToModel() {
+
+        // remove all the view listener
+        for (int i = 0; i < slotsArea.getChildCount(); i++) {
+            SlotView slotView = (SlotView) slotsArea.getChildAt(i);
+            slotView.setOnClickListener(null);
+        }
+
+        // remove the view doesn't remove the listeners
         slotsArea.removeAllViews();
+
         for (int i = 0; i < blocks.size(); i++) {
             Slot slot = blocks.get(i);
             SlotView blockView = new SlotView(getContext(), slot);
             blockView.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, slot.size()));
             blockView.setId(slot.getStart());
+            blockView.setSlotClickListener(this);
             slotsArea.addView(blockView);
         }
     }
