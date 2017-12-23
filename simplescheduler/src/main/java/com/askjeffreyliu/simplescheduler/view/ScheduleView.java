@@ -88,6 +88,8 @@ public class ScheduleView extends CardView implements ClickScrollListener {
 
     public void setDrawingMode(boolean isDrawingAvailable) {
         this.isDrawingAvailable = isDrawingAvailable;
+
+        updateColor();
     }
 
     private void addBlockOnIndex(int index) {
@@ -127,7 +129,10 @@ public class ScheduleView extends CardView implements ClickScrollListener {
 
         // check if the start index is starting from empty area or not
         int type = getTypeAtIndex(startIndex);
-        if (type == TYPE_EMPTY && movingBlock == null) {
+        if ((type == TYPE_EMPTY
+                || (type == TYPE_UNAVAILABLE && isDrawingAvailable)
+                || (type == TYPE_AVAILABLE && !isDrawingAvailable))
+                && movingBlock == null) {
 //            Logger.d("scrolling from empty space and was not dragging");
             // set whatever drag view that we have in the drag area to be exactly from start to end
 
@@ -374,9 +379,17 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         for (int i = 0; i < blocks.size(); i++) {
             Slot slot = blocks.get(i);
             SlotView blockView = new SlotView(getContext(), slot);
+            blockView.setDrawingAvailable(isDrawingAvailable);
             blockView.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, slot.size()));
             blockView.setId(slot.getStart());
             slotsArea.addView(blockView);
+        }
+    }
+
+    private void updateColor() {
+        for (int i = 0; i < slotsArea.getChildCount(); i++) {
+            SlotView slotView = (SlotView) slotsArea.getChildAt(i);
+            slotView.setDrawingAvailable(isDrawingAvailable);
         }
     }
 

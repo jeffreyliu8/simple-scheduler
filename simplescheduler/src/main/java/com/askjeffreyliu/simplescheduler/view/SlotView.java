@@ -31,10 +31,10 @@ public class SlotView extends FrameLayout {
 
         switch (slot.getType()) {
             case ScheduleConstant.TYPE_AVAILABLE:
-                slotArea.setBackgroundColor(ContextCompat.getColor(context, R.color.available_green));
+                slotArea.setBackgroundColor(ContextCompat.getColor(context, isDrawingAvailable ? R.color.available_green : R.color.available_green_light));
                 break;
             case ScheduleConstant.TYPE_UNAVAILABLE:
-                slotArea.setBackgroundColor(ContextCompat.getColor(context, R.color.unavailable_red));
+                slotArea.setBackgroundColor(ContextCompat.getColor(context, isDrawingAvailable ? R.color.unavailable_red_light : R.color.unavailable_red));
                 break;
             case ScheduleConstant.TYPE_COMMITTED:
                 slotArea.setBackgroundColor(Color.BLUE);
@@ -77,5 +77,17 @@ public class SlotView extends FrameLayout {
 
     public Slot getSlot() {
         return this.slot;
+    }
+
+    public void setDrawingAvailable(boolean isDrawingAvailable) {
+        this.isDrawingAvailable = isDrawingAvailable;
+        switch (slot.getType()) {
+            case ScheduleConstant.TYPE_AVAILABLE:
+                slotArea.setBackgroundColor(ContextCompat.getColor(getContext(), isDrawingAvailable ? R.color.available_green : R.color.available_green_light));
+                break;
+            case ScheduleConstant.TYPE_UNAVAILABLE:
+                slotArea.setBackgroundColor(ContextCompat.getColor(getContext(), isDrawingAvailable ? R.color.unavailable_red_light : R.color.unavailable_red));
+                break;
+        }
     }
 }

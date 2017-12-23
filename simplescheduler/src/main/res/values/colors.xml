@@ -8,4 +8,7 @@
 
     <color name="available_green_dark">#348b38</color>
     <color name="unavailable_red_dark">#830206</color>
+
+    <color name="available_green_light">#B366BB6A</color>
+    <color name="unavailable_red_light">#B3D02D2D</color>
 </resources>
