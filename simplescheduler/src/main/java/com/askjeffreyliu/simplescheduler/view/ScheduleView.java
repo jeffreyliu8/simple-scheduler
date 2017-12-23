@@ -35,6 +35,9 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     private ArrayList<Slot> blocks = new ArrayList<>();
     private Slot movingBlock = null;
 
+    private boolean isResizing = false;
+    private int resizeFixedPointIndex;
+
     public ScheduleView(Context context) {
         super(context);
         init();
@@ -128,12 +131,13 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         float singleSlotWidth = (float) getWidth() / ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY;
 
         // check if the start index is starting from empty area or not
-        int type = getTypeAtIndex(startIndex);
+        int type = getTypeAtIndex(startIndex, blocks);
         if ((type == TYPE_EMPTY
                 || (type == TYPE_UNAVAILABLE && isDrawingAvailable)
                 || (type == TYPE_AVAILABLE && !isDrawingAvailable))
-                && movingBlock == null) {
-//            Logger.d("scrolling from empty space and was not dragging");
+                && movingBlock == null
+                && !isResizing) {
+            Logger.d("scrolling from empty space and was not dragging");
             // set whatever drag view that we have in the drag area to be exactly from start to end
 
             Slot subSlotWithNoCommittedNorTimeOff = findSubAreaWithNoUnchangeableType(startIndex, endIndex);
@@ -152,7 +156,9 @@ public class ScheduleView extends CardView implements ClickScrollListener {
             dragView.setX(leftX);
             dragArea.removeAllViews(); // we might be able to use existing one instead of removing all.
             dragArea.addView(dragView);
-        } else if ((type == TYPE_AVAILABLE || type == TYPE_UNAVAILABLE) && movingBlock == null) {
+        } else if ((type == TYPE_AVAILABLE || type == TYPE_UNAVAILABLE)
+                && movingBlock == null
+                && !isResizing) {
             // here the user can do 2 things, either move the whole area or extends/shrink the size
             // determine if we are moving area or resizing
             // if the area is only movable for now
@@ -162,12 +168,31 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                 // we found the slot, we should add a drag view at the same location of this slot
                 // then remove this slot
 
+                // check if we are resizing or not
+                if (slot.size() >= 3) {
+                    // checking if we are resizing, starting from left or right
+
+                    if (startIndex == slot.getStart()) {
+                        // resizing the left size
+                        isResizing = true;
+                        resizeFixedPointIndex = slot.getEnd();
+                        resize(slot, endIndex, singleSlotWidth);
+                    } else if (endIndex == slot.getEnd()) {
+                        // resizing the right side
+                        isResizing = true;
+                        resizeFixedPointIndex = slot.getStart();
+                        resize(slot, endIndex, singleSlotWidth);
+                    }
+                }
+
+                if (isResizing) {
+                    return;
+                }
+
 
                 if (movingBlock == null) {
                     // save the moving block as a temp variable
                     movingBlock = new Slot(slot);
-                } else { // was already moving the block,
-                    Logger.d("was already moving the block");
                 }
 
 
@@ -190,7 +215,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                         leftIndexUpdated = leftIndex + moveVector;
                         rightIndexUpdated = rightIndex + moveVector;
 
-                        Logger.d("we hit right wall at index " + firstStoppingIndexGoingRight);
+//                        Logger.d("we hit right wall at index " + firstStoppingIndexGoingRight);
                     }
                 } else if (moveVector < 0) {
                     int firstStoppingIndexGoingLeft = findFirstIndexOfStoppingBlock(leftIndex, leftIndexUpdated);
@@ -201,7 +226,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                         leftIndexUpdated = leftIndex + moveVector;
                         rightIndexUpdated = rightIndex + moveVector;
 
-                        Logger.d("we hit left wall at index " + firstStoppingIndexGoingLeft);
+//                        Logger.d("we hit left wall at index " + firstStoppingIndexGoingLeft);
                     }
                 }
 
@@ -243,7 +268,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                     leftIndexUpdated = leftIndex + moveVector;
                     rightIndexUpdated = rightIndex + moveVector;
 
-                    Logger.d("we hit right wall at index " + firstStoppingIndexGoingRight);
+//                    Logger.d("we hit right wall at index " + firstStoppingIndexGoingRight);
                 }
             } else if (moveVector < 0) {
                 int firstStoppingIndexGoingLeft = findFirstIndexOfStoppingBlock(leftIndex, leftIndexUpdated);
@@ -254,7 +279,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                     leftIndexUpdated = leftIndex + moveVector;
                     rightIndexUpdated = rightIndex + moveVector;
 
-                    Logger.d("we hit left wall at index " + firstStoppingIndexGoingLeft);
+//                    Logger.d("we hit left wall at index " + firstStoppingIndexGoingLeft);
                 }
             }
 
@@ -263,6 +288,8 @@ public class ScheduleView extends CardView implements ClickScrollListener {
             dragView.setX(leftX);
             dragView.updateIndexAndText(leftIndexUpdated, rightIndexUpdated);
             dragView.updateDisplayLayout();
+        } else if (isResizing) {
+            resizeExistingDragView(endIndex, singleSlotWidth);
         }
     }
 
@@ -302,6 +329,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
             dragArea.removeAllViews();
         }
         movingBlock = null;
+        isResizing = false;
     }
 
     public void delete(Slot slot) {
@@ -407,9 +435,9 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     }
 
 
-    private int getTypeAtIndex(int index) {
-        for (int i = 0; i < blocks.size(); i++) {
-            Slot slot = blocks.get(i);
+    public static int getTypeAtIndex(int index, ArrayList<Slot> blockList) {
+        for (int i = 0; i < blockList.size(); i++) {
+            Slot slot = blockList.get(i);
             if (slot.contains(index)) {
                 return slot.getType();
             }
@@ -424,7 +452,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         if (start < end) {
             for (int i = start; i <= end; i++) {
                 // find the block/slot at index i, which type it is
-                int type = getTypeAtIndex(i);
+                int type = getTypeAtIndex(i, blocks);
                 if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
                     return new Slot(start, i - 1, TYPE_EMPTY);// type doesn't matter,
                 }
@@ -433,7 +461,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         } else if (start > end) {
             for (int i = start; i >= end; i--) {
                 // find the block/slot at index i, which type it is
-                int type = getTypeAtIndex(i);
+                int type = getTypeAtIndex(i, blocks);
                 if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
                     return new Slot(start, i + 1, TYPE_EMPTY);// type doesn't matter,
                 }
@@ -458,19 +486,35 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     private int findFirstIndexOfStoppingBlock(int start, int end) {
         if (start < end) {
             for (int i = start; i <= end; i++) {
-                int type = getTypeAtIndex(i);
+                int type = getTypeAtIndex(i, blocks);
                 if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
                     return i;
                 }
             }
         } else if (start > end) {
             for (int i = start; i >= end; i--) {
-                int type = getTypeAtIndex(i);
+                int type = getTypeAtIndex(i, blocks);
                 if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
                     return i;
                 }
             }
         }
         return -1;
+    }
+
+    private void resize(Slot slot, int fingerEndIndex, float singleSlotWidth) {
+        delete(slot);
+        DragView dragView = new DragView(getContext(), new Slot(resizeFixedPointIndex, resizeFixedPointIndex, isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE));
+        dragView.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT));
+        dragArea.removeAllViews();
+        dragArea.addView(dragView);
+        dragView.onScheduleDrag(resizeFixedPointIndex, fingerEndIndex, blocks, singleSlotWidth);
+    }
+
+    private void resizeExistingDragView(int fingerIndex, float singleSlotWidth) {
+        DragView dragView = (DragView) dragArea.getChildAt(0);
+        if (dragView != null) {
+            dragView.onScheduleDrag(resizeFixedPointIndex, fingerIndex, blocks, singleSlotWidth);
+        }
     }
 }

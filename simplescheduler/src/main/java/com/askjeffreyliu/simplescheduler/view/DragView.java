@@ -1,19 +1,25 @@
 package com.askjeffreyliu.simplescheduler.view;
 
 import android.content.Context;
-
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.widget.FrameLayout;
-
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.askjeffreyliu.simplescheduler.R;
 import com.askjeffreyliu.simplescheduler.ScheduleConstant;
 import com.askjeffreyliu.simplescheduler.model.Slot;
+
+import java.util.ArrayList;
+
+import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_AVAILABLE;
+import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_COMMITTED;
+import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_TIME_OFF;
+import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_UNAVAILABLE;
 
 /**
  * Created by jeff on 12/21/17.
@@ -38,13 +44,13 @@ public class DragView extends FrameLayout {
 
         switch (slot.getType()) {
             default:
-            case ScheduleConstant.TYPE_AVAILABLE:
+            case TYPE_AVAILABLE:
                 slotArea.setBackgroundColor(ContextCompat.getColor(context, R.color.available_green));
                 visibleArea.setBackgroundResource(R.drawable.drag_view_border_green);
                 leftHandle.setImageResource(R.drawable.drag_bar_green);
                 rightHandle.setImageResource(R.drawable.drag_bar_green);
                 break;
-            case ScheduleConstant.TYPE_UNAVAILABLE:
+            case TYPE_UNAVAILABLE:
                 slotArea.setBackgroundColor(ContextCompat.getColor(context, R.color.unavailable_red));
                 visibleArea.setBackgroundResource(R.drawable.drag_view_border_red);
                 leftHandle.setImageResource(R.drawable.drag_bar_red);
@@ -138,5 +144,56 @@ public class DragView extends FrameLayout {
             visibleArea.setLayoutParams(params);
         }
         requestLayout();
+    }
+
+    public void onScheduleDrag(int fixedIndex, int endIndex, ArrayList<Slot> currentModelWithoutOneBeingDragged, float singleSlotWidth) {
+
+        int finalLeft = fixedIndex;
+        int finalRight = fixedIndex;
+        float finalWidth, finalX;
+
+
+        if (endIndex < fixedIndex) { // resizing the left side
+            // we need to find the width and x for the view drag view
+            // width should be extending from the fixed index, all the way to end if no stopping block
+
+            int size = 0;
+
+            int i;
+            for (i = fixedIndex; i >= endIndex; i--) {
+                int type = ScheduleView.getTypeAtIndex(i, currentModelWithoutOneBeingDragged);
+                if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
+                    break;
+                }
+                size++;
+            }
+            finalWidth = singleSlotWidth * size;
+            int updatedEnd = i + 1;
+            finalX = updatedEnd * singleSlotWidth;
+
+            finalLeft = updatedEnd;
+        } else if (fixedIndex < endIndex) { // resizing the right side
+            int size = 0;
+            int i;
+            for (i = fixedIndex; i <= endIndex; i++) {
+                int type = ScheduleView.getTypeAtIndex(i, currentModelWithoutOneBeingDragged);
+                if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
+                    break;
+                }
+                size++;
+            }
+            finalWidth = singleSlotWidth * size;
+            int updatedEnd = i - 1;
+            finalX = fixedIndex * singleSlotWidth;
+
+            finalRight = updatedEnd;
+        } else { // size of 1
+            finalWidth = singleSlotWidth;
+            finalX = fixedIndex * singleSlotWidth;
+        }
+
+        setLayoutParams(new LinearLayout.LayoutParams(Math.round(finalWidth), LayoutParams.MATCH_PARENT));
+        setX(finalX);
+        updateIndexAndText(finalLeft, finalRight);
     }
 }
