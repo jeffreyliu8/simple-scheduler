@@ -180,99 +180,10 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                     movingBlock = new Slot(slot);
                 }
 
-
-                int moveVector = endIndex - startIndex;
-
-                int leftIndex = Math.min(movingBlock.getStart(), movingBlock.getEnd());
-                int rightIndex = Math.max(movingBlock.getStart(), movingBlock.getEnd());
-
-                int leftIndexUpdated = leftIndex + moveVector;
-                int rightIndexUpdated = rightIndex + moveVector;
-
-
-                // check if we would hit any stopping block like committed/time off
-                if (moveVector > 0) {
-                    int firstStoppingIndexGoingRight = findFirstIndexOfStoppingBlock(rightIndex, rightIndexUpdated);
-                    if (firstStoppingIndexGoingRight != -1) {
-                        // we hit a wall, stop before this location
-                        moveVector = firstStoppingIndexGoingRight - rightIndex - 1;
-
-                        leftIndexUpdated = leftIndex + moveVector;
-                        rightIndexUpdated = rightIndex + moveVector;
-
-//                        Logger.d("we hit right wall at index " + firstStoppingIndexGoingRight);
-                    }
-                } else if (moveVector < 0) {
-                    int firstStoppingIndexGoingLeft = findFirstIndexOfStoppingBlock(leftIndex, leftIndexUpdated);
-                    if (firstStoppingIndexGoingLeft != -1) {
-                        // we hit a wall, stop before this location
-                        moveVector = firstStoppingIndexGoingLeft - leftIndex + 1;
-
-                        leftIndexUpdated = leftIndex + moveVector;
-                        rightIndexUpdated = rightIndex + moveVector;
-
-//                        Logger.d("we hit left wall at index " + firstStoppingIndexGoingLeft);
-                    }
-                }
-
-                float dragViewWidth = singleSlotWidth * movingBlock.size();
-
-                // where should the drag view x be? It should at least be a multiple of single slot width
-                float leftX = (leftIndex + moveVector) * singleSlotWidth;
-
-                DragView dragView = new DragView(getContext(), new Slot(leftIndexUpdated, rightIndexUpdated, movingBlock.getType()));
-                dragView.setParentWidth(getWidth());
-                dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
-                dragView.setX(leftX);
-                dragArea.removeAllViews(); // we might be able to use existing one instead of removing all.
-                dragArea.addView(dragView);
-                dragView.updateDisplayLayout();
-                delete(slot);
+                movingDragView(startIndex, endIndex, singleSlotWidth, true, slot);
             }
         } else if (movingBlock != null) {
-            // find the existing drag view
-            DragView dragView = (DragView) dragArea.getChildAt(0);
-            // just set new X
-
-            int moveVector = endIndex - startIndex;
-
-            int leftIndex = Math.min(movingBlock.getStart(), movingBlock.getEnd());
-            int rightIndex = Math.max(movingBlock.getStart(), movingBlock.getEnd());
-
-            int leftIndexUpdated = leftIndex + moveVector;
-            int rightIndexUpdated = rightIndex + moveVector;
-
-
-            // check if we would hit any stopping block like committed/time off
-            if (moveVector > 0) {
-                int firstStoppingIndexGoingRight = findFirstIndexOfStoppingBlock(rightIndex, rightIndexUpdated);
-                if (firstStoppingIndexGoingRight != -1) {
-                    // we hit a wall, stop before this location
-                    moveVector = firstStoppingIndexGoingRight - rightIndex - 1;
-
-                    leftIndexUpdated = leftIndex + moveVector;
-                    rightIndexUpdated = rightIndex + moveVector;
-
-//                    Logger.d("we hit right wall at index " + firstStoppingIndexGoingRight);
-                }
-            } else if (moveVector < 0) {
-                int firstStoppingIndexGoingLeft = findFirstIndexOfStoppingBlock(leftIndex, leftIndexUpdated);
-                if (firstStoppingIndexGoingLeft != -1) {
-                    // we hit a wall, stop before this location
-                    moveVector = firstStoppingIndexGoingLeft - leftIndex + 1;
-
-                    leftIndexUpdated = leftIndex + moveVector;
-                    rightIndexUpdated = rightIndex + moveVector;
-
-//                    Logger.d("we hit left wall at index " + firstStoppingIndexGoingLeft);
-                }
-            }
-
-            // where should the drag view x be? It should at least be a multiple of single slot width
-            float leftX = (leftIndex + moveVector) * singleSlotWidth;
-            dragView.setX(leftX);
-            dragView.updateIndexAndText(leftIndexUpdated, rightIndexUpdated);
-            dragView.updateDisplayLayout();
+            movingDragView(startIndex, endIndex, singleSlotWidth, false, null);
         } else if (isResizing) {
             resizeExistingDragView(endIndex, singleSlotWidth);
         }
@@ -487,7 +398,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         return -1;
     }
 
-    private void resize(Slot slot, int fingerEndIndex, float singleSlotWidth) {
+    private void resizeOnStart(Slot slot, int fingerEndIndex, float singleSlotWidth) {
         delete(slot);
         DragView dragView = new DragView(getContext(), new Slot(resizeFixedPointIndex, resizeFixedPointIndex, isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE));
         dragView.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT));
@@ -521,16 +432,74 @@ public class ScheduleView extends CardView implements ClickScrollListener {
             // resizing the left size
             isResizing = true;
             resizeFixedPointIndex = slot.getEnd();
-            resize(slot, endIndex, singleSlotWidth);
+            resizeOnStart(slot, endIndex, singleSlotWidth);
             return true;
         } else if (startIndex >= slot.getEnd() - sideDragRange) {
             // resizing the right side
             isResizing = true;
             resizeFixedPointIndex = slot.getStart();
-            resize(slot, endIndex, singleSlotWidth);
+            resizeOnStart(slot, endIndex, singleSlotWidth);
             return true;
         }
 
         return false;
+    }
+
+    private void movingDragView(int startIndex, int endIndex, float singleSlotWidth, boolean isStarting, Slot startingSlot) {
+        int moveVector = endIndex - startIndex;
+
+        int leftIndex = Math.min(movingBlock.getStart(), movingBlock.getEnd());
+        int rightIndex = Math.max(movingBlock.getStart(), movingBlock.getEnd());
+
+        int leftIndexUpdated = leftIndex + moveVector;
+        int rightIndexUpdated = rightIndex + moveVector;
+
+
+        // check if we would hit any stopping block like committed/time off
+        if (moveVector > 0) {
+            int firstStoppingIndexGoingRight = findFirstIndexOfStoppingBlock(rightIndex, rightIndexUpdated);
+            if (firstStoppingIndexGoingRight != -1) {
+                // we hit a wall, stop before this location
+                moveVector = firstStoppingIndexGoingRight - rightIndex - 1;
+
+                leftIndexUpdated = leftIndex + moveVector;
+                rightIndexUpdated = rightIndex + moveVector;
+
+//                        Logger.d("we hit right wall at index " + firstStoppingIndexGoingRight);
+            }
+        } else if (moveVector < 0) {
+            int firstStoppingIndexGoingLeft = findFirstIndexOfStoppingBlock(leftIndex, leftIndexUpdated);
+            if (firstStoppingIndexGoingLeft != -1) {
+                // we hit a wall, stop before this location
+                moveVector = firstStoppingIndexGoingLeft - leftIndex + 1;
+
+                leftIndexUpdated = leftIndex + moveVector;
+                rightIndexUpdated = rightIndex + moveVector;
+
+//                        Logger.d("we hit left wall at index " + firstStoppingIndexGoingLeft);
+            }
+        }
+
+        float dragViewWidth = singleSlotWidth * movingBlock.size();
+
+        // where should the drag view x be? It should at least be a multiple of single slot width
+        float leftX = (leftIndex + moveVector) * singleSlotWidth;
+
+        DragView dragView;
+        if (isStarting) {
+            dragArea.removeAllViews(); // we might be able to use existing one instead of removing all.
+
+            dragView = new DragView(getContext(), new Slot(leftIndexUpdated, rightIndexUpdated, movingBlock.getType()));
+            dragView.setParentWidth(getWidth());
+            dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
+            dragArea.addView(dragView);
+
+            delete(startingSlot);
+        } else {
+            dragView = (DragView) dragArea.getChildAt(0);
+        }
+        dragView.setX(leftX);
+        dragView.updateIndexAndText(leftIndexUpdated, rightIndexUpdated);
+        dragView.updateDisplayLayout();
     }
 }
