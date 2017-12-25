@@ -96,7 +96,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     }
 
     private void addBlockOnIndex(int index) {
-        Logger.d("empty place click on" + index);
+//        Logger.d("empty place click on " + index);
         ArrayList<Slot> breakDownList = createBreakDown();
 
         for (int i = index; i <= index + 4; i++) {
@@ -137,7 +137,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                 || (type == TYPE_AVAILABLE && !isDrawingAvailable))
                 && movingBlock == null
                 && !isResizing) {
-            Logger.d("scrolling from empty space and was not dragging");
+//            Logger.d("scrolling from empty space and was not dragging");
             // set whatever drag view that we have in the drag area to be exactly from start to end
 
             Slot subSlotWithNoCommittedNorTimeOff = findSubAreaWithNoUnchangeableType(startIndex, endIndex);
@@ -169,26 +169,11 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                 // then remove this slot
 
                 // check if we are resizing or not
-                if (slot.size() >= 3) {
-                    // checking if we are resizing, starting from left or right
-
-                    if (startIndex == slot.getStart()) {
-                        // resizing the left size
-                        isResizing = true;
-                        resizeFixedPointIndex = slot.getEnd();
-                        resize(slot, endIndex, singleSlotWidth);
-                    } else if (endIndex == slot.getEnd()) {
-                        // resizing the right side
-                        isResizing = true;
-                        resizeFixedPointIndex = slot.getStart();
-                        resize(slot, endIndex, singleSlotWidth);
-                    }
-                }
-
-                if (isResizing) {
+                if (checkIsResizing(slot, startIndex, endIndex, singleSlotWidth)) {
                     return;
                 }
 
+//                Logger.d("start moving on index " + startIndex + " with " + slot.getStart() + " - " + slot.getEnd());
 
                 if (movingBlock == null) {
                     // save the moving block as a temp variable
@@ -516,5 +501,36 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         if (dragView != null) {
             dragView.onScheduleDrag(resizeFixedPointIndex, fingerIndex, blocks, singleSlotWidth);
         }
+    }
+
+    private boolean checkIsResizing(Slot slot, int startIndex, int endIndex, float singleSlotWidth) {
+        if (slot.size() < 3) {
+            return false;
+        }
+
+        int sideDragRange = 0;
+        if (slot.size() >= 9) {
+            sideDragRange = 2;
+        } else if (slot.size() >= 6) {
+            sideDragRange = 1;
+        }
+
+//        Logger.d("check drag  on index " + startIndex + " with " + slot.getStart() + " - " + slot.getEnd() + " slot range " + sideDragRange);
+
+        if (startIndex <= slot.getStart() + sideDragRange) {
+            // resizing the left size
+            isResizing = true;
+            resizeFixedPointIndex = slot.getEnd();
+            resize(slot, endIndex, singleSlotWidth);
+            return true;
+        } else if (startIndex >= slot.getEnd() - sideDragRange) {
+            // resizing the right side
+            isResizing = true;
+            resizeFixedPointIndex = slot.getStart();
+            resize(slot, endIndex, singleSlotWidth);
+            return true;
+        }
+
+        return false;
     }
 }
