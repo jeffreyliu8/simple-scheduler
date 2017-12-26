@@ -152,11 +152,18 @@ public class ScheduleView extends CardView implements ClickScrollListener {
             // where should the drag view x be? It should at least be a multiple of single slot width
             float leftX = leftIndex * singleSlotWidth;
 
-            DragView dragView = new DragView(getContext(), new Slot(leftIndex, rightIndex, isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE));
-            dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
-            dragView.setX(leftX);
-            dragArea.removeAllViews(); // we might be able to use existing one instead of removing all.
-            dragArea.addView(dragView);
+            DragView dragView;
+            if (dragArea != null) {
+                if (dragArea.getChildCount() == 0) {
+                    dragView = new DragView(getContext(), new Slot(leftIndex, rightIndex, isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE));
+                    dragArea.addView(dragView);
+                } else {
+                    dragView = (DragView) dragArea.getChildAt(0);
+                    dragView.updateIndexAndText(leftIndex, rightIndex);
+                }
+                dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
+                dragView.setX(leftX);
+            }
         } else if ((type == TYPE_AVAILABLE || type == TYPE_UNAVAILABLE)
                 && movingBlock == null
                 && !isResizing) {

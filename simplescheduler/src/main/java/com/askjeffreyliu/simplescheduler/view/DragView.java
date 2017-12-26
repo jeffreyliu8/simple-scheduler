@@ -28,7 +28,6 @@ import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_UNAVAILABL
 public class DragView extends FrameLayout {
     private Slot slot;
     private float parentWidth = 0;
-    private boolean isDrawingAvailable = true;
     private FrameLayout slotArea;
     private FrameLayout visibleArea;
     private ImageView leftHandle;
