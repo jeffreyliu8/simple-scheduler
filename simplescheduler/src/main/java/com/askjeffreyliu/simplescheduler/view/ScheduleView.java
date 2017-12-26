@@ -1,10 +1,11 @@
 package com.askjeffreyliu.simplescheduler.view;
 
 import android.content.Context;
+import android.os.Build;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.CardView;
 import android.util.AttributeSet;
-
 import android.widget.LinearLayout;
 
 import com.askjeffreyliu.simplescheduler.R;
@@ -62,6 +63,16 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         detectionView.setListener(this);
 
         this.setRadius(getContext().getResources().getDimensionPixelSize(R.dimen.corner_radius));
+        this.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.border_gray));
+        int borderWidth = getContext().getResources().getDimensionPixelOffset(R.dimen.border_width);
+        this.setContentPadding(borderWidth, borderWidth, borderWidth, borderWidth);
+        CardView cardView = findViewById(R.id.innerCard);
+        cardView.setRadius(getContext().getResources().getDimensionPixelSize(R.dimen.corner_radius));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            setElevation(0);
+            cardView.setElevation(0);
+        }
     }
 
     @Override

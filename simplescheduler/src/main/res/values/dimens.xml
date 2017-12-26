@@ -1,3 +1,4 @@
 <resources>
-    <dimen name="corner_radius">@dimen/cardview_default_radius</dimen>
+    <dimen name="border_width">1dp</dimen>
+    <dimen name="corner_radius">4dp</dimen>
 </resources>

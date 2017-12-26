@@ -2,6 +2,8 @@
 <resources>
     <color name="light_gray">#EEEEEE</color>
 
+    <color name="border_gray">#B1BCBE</color>
+
 
     <color name="available_green">#66bb6a</color>
     <color name="unavailable_red">#d02d2d</color>

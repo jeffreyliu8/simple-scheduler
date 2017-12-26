@@ -3,60 +3,59 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!--divider line, this must be the first item-->
-    <LinearLayout
+    <android.support.v7.widget.CardView
+        android:id="@+id/innerCard"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal">
-
-
-        <include layout="@layout/day_schedule_background_block" />
-
-        <include layout="@layout/day_schedule_background_block" />
-
-        <include layout="@layout/day_schedule_background_block" />
-
-        <include layout="@layout/day_schedule_background_block" />
-
-        <include layout="@layout/day_schedule_background_block" />
-
-        <!--this last item doesn't need the last line-->
-        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="0dp"
+        android:layout_height="match_parent">
+        <!--divider line, this must be the first item-->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1">
+            android:orientation="horizontal">
 
-            <View
-                android:layout_width="1dp"
+
+            <include layout="@layout/day_schedule_background_block" />
+
+            <include layout="@layout/day_schedule_background_block" />
+
+            <include layout="@layout/day_schedule_background_block" />
+
+            <include layout="@layout/day_schedule_background_block" />
+
+            <include layout="@layout/day_schedule_background_block" />
+
+            <!--this last item doesn't need the last line-->
+            <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:background="@color/light_gray" />
+                android:layout_weight="1">
 
-        </FrameLayout>
-    </LinearLayout>
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:background="@color/light_gray" />
+
+            </FrameLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/slotsArea"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:weightSum="48" />
+
+        <LinearLayout
+            android:id="@+id/dragArea"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:weightSum="48" />
+    </android.support.v7.widget.CardView>
 
     <com.askjeffreyliu.simplescheduler.view.TouchDetectionView
         android:id="@+id/detection"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
-    <LinearLayout
-        android:id="@+id/slotsArea"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:weightSum="48" />
-
-    <LinearLayout
-        android:id="@+id/dragArea"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:weightSum="48" />
-
-    <!--this must be the last item-->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/day_schedule_view_border" />
 </merge>
