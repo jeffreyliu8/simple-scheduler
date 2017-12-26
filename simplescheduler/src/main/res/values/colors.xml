@@ -11,4 +11,6 @@
 
     <color name="available_green_light">#B366BB6A</color>
     <color name="unavailable_red_light">#B3D02D2D</color>
+
+    <color name="committed_gray">#ceced2</color>
 </resources>

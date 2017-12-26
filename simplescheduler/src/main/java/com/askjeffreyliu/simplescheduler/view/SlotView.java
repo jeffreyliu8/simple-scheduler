@@ -5,12 +5,14 @@ import android.graphics.Color;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
+import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.askjeffreyliu.simplescheduler.R;
 import com.askjeffreyliu.simplescheduler.ScheduleConstant;
 import com.askjeffreyliu.simplescheduler.model.Slot;
+import com.askjeffreyliu.zebraview.ZebraView;
 
 /**
  * Created by jeff on 12/21/17.
@@ -37,7 +39,13 @@ public class SlotView extends FrameLayout {
                 slotArea.setBackgroundColor(ContextCompat.getColor(context, isDrawingAvailable ? R.color.unavailable_red_light : R.color.unavailable_red));
                 break;
             case ScheduleConstant.TYPE_COMMITTED:
-                slotArea.setBackgroundColor(Color.BLUE);
+                ZebraView zebraView = new ZebraView(context);
+                zebraView.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                zebraView.setColors(
+                        ContextCompat.getColor(context, R.color.available_green),
+                        ContextCompat.getColor(context, R.color.committed_gray));
+                zebraView.setBarWidth(30); // in px
+                slotArea.addView(zebraView);
                 break;
             case ScheduleConstant.TYPE_TIME_OFF:
                 slotArea.setBackgroundColor(Color.GRAY);
