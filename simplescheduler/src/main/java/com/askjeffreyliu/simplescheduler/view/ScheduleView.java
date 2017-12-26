@@ -34,6 +34,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     private OnScheduleEventListener listener;
     private ArrayList<Slot> blocks = new ArrayList<>();
     private Slot movingBlock = null;
+    private int boundaryLeftIndex = -1, boundaryRightIndex = -1; // for moving
 
     private boolean isResizing = false;
     private int resizeFixedPointIndex;
@@ -226,6 +227,8 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         }
         movingBlock = null;
         isResizing = false;
+        boundaryLeftIndex = -1;
+        boundaryRightIndex = -1;
     }
 
     public void delete(Slot slot) {
@@ -379,16 +382,16 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     }
 
     // if -1, non has been found
-    private int findFirstIndexOfStoppingBlock(int start, int end) {
-        if (start < end) {
-            for (int i = start; i <= end; i++) {
+    private int findFirstIndexOfStoppingBlock(Slot slot, boolean isGoingLeft) {
+        if (isGoingLeft) {
+            for (int i = slot.getStart(); i >= 0; i--) {
                 int type = getTypeAtIndex(i, blocks);
                 if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
                     return i;
                 }
             }
-        } else if (start > end) {
-            for (int i = start; i >= end; i--) {
+        } else {
+            for (int i = slot.getEnd(); i < ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY; i++) {
                 int type = getTypeAtIndex(i, blocks);
                 if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
                     return i;
@@ -454,24 +457,26 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         int leftIndexUpdated = leftIndex + moveVector;
         int rightIndexUpdated = rightIndex + moveVector;
 
+        if (isStarting) {
+            boundaryRightIndex = findFirstIndexOfStoppingBlock(startingSlot, false);
+            boundaryLeftIndex = findFirstIndexOfStoppingBlock(startingSlot, true);
+        }
 
         // check if we would hit any stopping block like committed/time off
         if (moveVector > 0) {
-            int firstStoppingIndexGoingRight = findFirstIndexOfStoppingBlock(rightIndex, rightIndexUpdated);
-            if (firstStoppingIndexGoingRight != -1) {
+            // if there is a wall and if we are over it
+            if (boundaryRightIndex != -1 && rightIndexUpdated >= boundaryRightIndex) {
                 // we hit a wall, stop before this location
-                moveVector = firstStoppingIndexGoingRight - rightIndex - 1;
+                moveVector = boundaryRightIndex - rightIndex - 1;
 
                 leftIndexUpdated = leftIndex + moveVector;
                 rightIndexUpdated = rightIndex + moveVector;
-
 //                        Logger.d("we hit right wall at index " + firstStoppingIndexGoingRight);
             }
         } else if (moveVector < 0) {
-            int firstStoppingIndexGoingLeft = findFirstIndexOfStoppingBlock(leftIndex, leftIndexUpdated);
-            if (firstStoppingIndexGoingLeft != -1) {
+            if (boundaryLeftIndex != -1 && leftIndexUpdated <= boundaryLeftIndex) {
                 // we hit a wall, stop before this location
-                moveVector = firstStoppingIndexGoingLeft - leftIndex + 1;
+                moveVector = boundaryLeftIndex - leftIndex + 1;
 
                 leftIndexUpdated = leftIndex + moveVector;
                 rightIndexUpdated = rightIndex + moveVector;
@@ -479,8 +484,6 @@ public class ScheduleView extends CardView implements ClickScrollListener {
 //                        Logger.d("we hit left wall at index " + firstStoppingIndexGoingLeft);
             }
         }
-
-        float dragViewWidth = singleSlotWidth * movingBlock.size();
 
         // where should the drag view x be? It should at least be a multiple of single slot width
         float leftX = (leftIndex + moveVector) * singleSlotWidth;
@@ -491,6 +494,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
 
             dragView = new DragView(getContext(), new Slot(leftIndexUpdated, rightIndexUpdated, movingBlock.getType()));
             dragView.setParentWidth(getWidth());
+            float dragViewWidth = singleSlotWidth * movingBlock.size();
             dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
             dragArea.addView(dragView);
 
