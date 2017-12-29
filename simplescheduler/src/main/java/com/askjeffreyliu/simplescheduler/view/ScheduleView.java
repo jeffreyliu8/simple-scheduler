@@ -140,6 +140,8 @@ public class ScheduleView extends CardView implements ClickScrollListener {
     public int getXOfIndex(int index) {
         if (index >= ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY) {
             return getWidth();
+        } else if (index < 0) {
+            return -Math.round(divider.getChildAt(-index).getX());
         }
         return Math.round(divider.getChildAt(index).getX());
     }
