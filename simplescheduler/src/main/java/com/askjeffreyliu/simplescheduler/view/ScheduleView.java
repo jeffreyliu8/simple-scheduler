@@ -30,6 +30,7 @@ import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_UNAVAILABL
 
 public class ScheduleView extends CardView implements ClickScrollListener {
     private boolean isDrawingAvailable = true;
+    private LinearLayout divider;
     private LinearLayout slotsArea;
     private LinearLayout dragArea;
     private OnScheduleEventListener listener;
@@ -57,6 +58,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
 
     private void init() {
         inflate(getContext(), R.layout.schedule_view, this);
+        this.divider = findViewById(R.id.divider);
         this.slotsArea = findViewById(R.id.slotsArea);
         this.dragArea = findViewById(R.id.dragArea);
         TouchDetectionView detectionView = findViewById(R.id.detection);
@@ -135,13 +137,26 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         updateModelAndUI();
     }
 
+    public int getXOfIndex(int index) {
+        if (index >= ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY) {
+            return getWidth();
+        }
+        return Math.round(divider.getChildAt(index).getX());
+    }
+
+    public int getWidthFromIndexToIndex(int leftIndex, int rightIndex) {
+        int xLocationOfRightSide;
+        if (rightIndex >= ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY) {
+            xLocationOfRightSide = getWidth();
+        } else {
+            xLocationOfRightSide = getXOfIndex(rightIndex + 1);
+        }
+        return xLocationOfRightSide - getXOfIndex(leftIndex);
+    }
+
     @Override
     public void onIndexScrolled(int startIndex, int endIndex) {
 //        Logger.d("scrolling on" + startIndex + " " + endIndex);
-
-        // how big is one single slot?
-        float singleSlotWidth = (float) getWidth() / ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY;
-
         // check if the start index is starting from empty area or not
         int type = getTypeAtIndex(startIndex, blocks);
         if ((type == TYPE_EMPTY
@@ -158,10 +173,10 @@ public class ScheduleView extends CardView implements ClickScrollListener {
             int rightIndex = Math.max(subSlotWithNoCommittedNorTimeOff.getStart(), subSlotWithNoCommittedNorTimeOff.getEnd());
 
 
-            float dragViewWidth = singleSlotWidth * (rightIndex - leftIndex + 1);
+            int dragViewWidth = getWidthFromIndexToIndex(leftIndex, rightIndex);
 
             // where should the drag view x be? It should at least be a multiple of single slot width
-            float leftX = leftIndex * singleSlotWidth;
+            int leftX = getXOfIndex(leftIndex);
 
             DragView dragView;
             if (dragArea != null) {
@@ -188,7 +203,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                 // then remove this slot
 
                 // check if we are resizing or not
-                if (checkIsResizing(slot, startIndex, endIndex, singleSlotWidth)) {
+                if (checkIsResizing(slot, startIndex, endIndex)) {
                     return;
                 }
 
@@ -199,12 +214,12 @@ public class ScheduleView extends CardView implements ClickScrollListener {
                     movingBlock = new Slot(slot);
                 }
 
-                movingDragView(startIndex, endIndex, singleSlotWidth, true, slot);
+                movingDragView(startIndex, endIndex, true, slot);
             }
         } else if (movingBlock != null) {
-            movingDragView(startIndex, endIndex, singleSlotWidth, false, null);
+            movingDragView(startIndex, endIndex, false, null);
         } else if (isResizing) {
-            resizeExistingDragView(endIndex, singleSlotWidth);
+            resizeExistingDragView(endIndex);
         }
     }
 
@@ -321,11 +336,21 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         // remove the view doesn't remove the listeners
         slotsArea.removeAllViews();
 
+        boolean isLayoutFinished = true;
+        if (getXOfIndex(1) == 0) {
+            // layout is not ready!
+            isLayoutFinished = false;
+        }
+
         for (int i = 0; i < blocks.size(); i++) {
             Slot slot = blocks.get(i);
             SlotView blockView = new SlotView(getContext(), slot);
             blockView.setDrawingAvailable(isDrawingAvailable);
-            blockView.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, slot.size()));
+            if (isLayoutFinished) {
+                blockView.setLayoutParams(new LinearLayout.LayoutParams(getWidthFromIndexToIndex(slot.getStart(), slot.getEnd()), LayoutParams.MATCH_PARENT));
+            } else {
+                blockView.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, slot.size()));
+            }
             blockView.setId(slot.getStart());
             slotsArea.addView(blockView);
         }
@@ -419,23 +444,23 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         return -1;
     }
 
-    private void resizeOnStart(Slot slot, int fingerEndIndex, float singleSlotWidth) {
+    private void resizeOnStart(Slot slot, int fingerEndIndex) {
         delete(slot);
         DragView dragView = new DragView(getContext(), new Slot(resizeFixedPointIndex, resizeFixedPointIndex, isDrawingAvailable ? TYPE_AVAILABLE : TYPE_UNAVAILABLE));
         dragView.setLayoutParams(new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT));
         dragArea.removeAllViews();
         dragArea.addView(dragView);
-        dragView.onScheduleDrag(resizeFixedPointIndex, fingerEndIndex, blocks, singleSlotWidth);
+        dragView.onScheduleDrag(resizeFixedPointIndex, fingerEndIndex, blocks, this);
     }
 
-    private void resizeExistingDragView(int fingerIndex, float singleSlotWidth) {
+    private void resizeExistingDragView(int fingerIndex) {
         DragView dragView = (DragView) dragArea.getChildAt(0);
         if (dragView != null) {
-            dragView.onScheduleDrag(resizeFixedPointIndex, fingerIndex, blocks, singleSlotWidth);
+            dragView.onScheduleDrag(resizeFixedPointIndex, fingerIndex, blocks, this);
         }
     }
 
-    private boolean checkIsResizing(Slot slot, int startIndex, int endIndex, float singleSlotWidth) {
+    private boolean checkIsResizing(Slot slot, int startIndex, int endIndex) {
         if (slot.size() < 3) {
             return false;
         }
@@ -453,20 +478,20 @@ public class ScheduleView extends CardView implements ClickScrollListener {
             // resizing the left size
             isResizing = true;
             resizeFixedPointIndex = slot.getEnd();
-            resizeOnStart(slot, endIndex, singleSlotWidth);
+            resizeOnStart(slot, endIndex);
             return true;
         } else if (startIndex >= slot.getEnd() - sideDragRange) {
             // resizing the right side
             isResizing = true;
             resizeFixedPointIndex = slot.getStart();
-            resizeOnStart(slot, endIndex, singleSlotWidth);
+            resizeOnStart(slot, endIndex);
             return true;
         }
 
         return false;
     }
 
-    private void movingDragView(int startIndex, int endIndex, float singleSlotWidth, boolean isStarting, Slot startingSlot) {
+    private void movingDragView(int startIndex, int endIndex, boolean isStarting, Slot startingSlot) {
         int moveVector = endIndex - startIndex;
 
         int leftIndex = Math.min(movingBlock.getStart(), movingBlock.getEnd());
@@ -504,7 +529,7 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         }
 
         // where should the drag view x be? It should at least be a multiple of single slot width
-        float leftX = (leftIndex + moveVector) * singleSlotWidth;
+        int leftX = getXOfIndex(leftIndex + moveVector);
 
         DragView dragView;
         if (isStarting) {
@@ -512,13 +537,15 @@ public class ScheduleView extends CardView implements ClickScrollListener {
 
             dragView = new DragView(getContext(), new Slot(leftIndexUpdated, rightIndexUpdated, movingBlock.getType()));
             dragView.setParentWidth(getWidth());
-            float dragViewWidth = singleSlotWidth * movingBlock.size();
+            int dragViewWidth = getWidthFromIndexToIndex(movingBlock.getStart(), movingBlock.getEnd());
             dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
             dragArea.addView(dragView);
 
             delete(startingSlot);
         } else {
             dragView = (DragView) dragArea.getChildAt(0);
+            int dragViewWidth = getWidthFromIndexToIndex(movingBlock.getStart(), movingBlock.getEnd());
+            dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
         }
         dragView.setX(leftX);
         dragView.updateIndexAndText(leftIndexUpdated, rightIndexUpdated);

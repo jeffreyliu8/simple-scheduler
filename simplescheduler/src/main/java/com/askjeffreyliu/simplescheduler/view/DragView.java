@@ -27,7 +27,7 @@ import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_UNAVAILABL
 
 public class DragView extends FrameLayout {
     private Slot slot;
-    private float parentWidth = 0;
+    private int parentWidth = 0;
     private FrameLayout slotArea;
     private FrameLayout visibleArea;
     private ImageView leftHandle;
@@ -92,7 +92,7 @@ public class DragView extends FrameLayout {
         rightHandle = findViewById(R.id.rightHandle);
     }
 
-    public void setParentWidth(float parentWidth) {
+    public void setParentWidth(int parentWidth) {
         this.parentWidth = parentWidth;
     }
 
@@ -145,18 +145,16 @@ public class DragView extends FrameLayout {
         requestLayout();
     }
 
-    public void onScheduleDrag(int fixedIndex, int endIndex, ArrayList<Slot> currentModelWithoutOneBeingDragged, float singleSlotWidth) {
+    public void onScheduleDrag(int fixedIndex, int endIndex, ArrayList<Slot> currentModelWithoutOneBeingDragged, ScheduleView parentView) {
 
         int finalLeft = fixedIndex;
         int finalRight = fixedIndex;
-        float finalWidth, finalX;
+        int finalWidth, finalX;
 
 
         if (endIndex < fixedIndex) { // resizing the left side
             // we need to find the width and x for the view drag view
             // width should be extending from the fixed index, all the way to end if no stopping block
-
-            int size = 0;
 
             int i;
             for (i = fixedIndex; i >= endIndex; i--) {
@@ -164,31 +162,30 @@ public class DragView extends FrameLayout {
                 if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
                     break;
                 }
-                size++;
             }
-            finalWidth = singleSlotWidth * size;
+
             int updatedEnd = i + 1;
-            finalX = updatedEnd * singleSlotWidth;
+            finalX = parentView.getXOfIndex(updatedEnd);
 
             finalLeft = updatedEnd;
+            finalWidth = parentView.getWidthFromIndexToIndex(updatedEnd, fixedIndex);
         } else if (fixedIndex < endIndex) { // resizing the right side
-            int size = 0;
             int i;
             for (i = fixedIndex; i <= endIndex; i++) {
                 int type = ScheduleView.getTypeAtIndex(i, currentModelWithoutOneBeingDragged);
                 if (type == TYPE_COMMITTED || type == TYPE_TIME_OFF) {
                     break;
                 }
-                size++;
             }
-            finalWidth = singleSlotWidth * size;
+
             int updatedEnd = i - 1;
-            finalX = fixedIndex * singleSlotWidth;
+            finalX = parentView.getXOfIndex(fixedIndex);
 
             finalRight = updatedEnd;
+            finalWidth = parentView.getWidthFromIndexToIndex(fixedIndex, finalRight);
         } else { // size of 1
-            finalWidth = singleSlotWidth;
-            finalX = fixedIndex * singleSlotWidth;
+            finalWidth = parentView.getWidthFromIndexToIndex(fixedIndex, fixedIndex);
+            finalX = parentView.getXOfIndex(fixedIndex);
         }
 
         setLayoutParams(new LinearLayout.LayoutParams(Math.round(finalWidth), LayoutParams.MATCH_PARENT));
