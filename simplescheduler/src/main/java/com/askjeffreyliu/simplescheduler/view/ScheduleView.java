@@ -30,7 +30,7 @@ import static com.askjeffreyliu.simplescheduler.ScheduleConstant.TYPE_UNAVAILABL
 
 public class ScheduleView extends CardView implements ClickScrollListener {
     private boolean isDrawingAvailable = true;
-    private LinearLayout divider;
+    private int[] xMap = new int[ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY];
     private LinearLayout slotsArea;
     private LinearLayout dragArea;
     private OnScheduleEventListener listener;
@@ -58,7 +58,6 @@ public class ScheduleView extends CardView implements ClickScrollListener {
 
     private void init() {
         inflate(getContext(), R.layout.schedule_view, this);
-        this.divider = findViewById(R.id.divider);
         this.slotsArea = findViewById(R.id.slotsArea);
         this.dragArea = findViewById(R.id.dragArea);
         TouchDetectionView detectionView = findViewById(R.id.detection);
@@ -74,6 +73,15 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             setElevation(0);
             cardView.setElevation(0);
+        }
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        xMap[0] = 0;
+        for (int i = 1; i < xMap.length; i++) {
+            xMap[i] = Math.round((float) w / ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY * i);
         }
     }
 
@@ -141,9 +149,9 @@ public class ScheduleView extends CardView implements ClickScrollListener {
         if (index >= ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY) {
             return getWidth();
         } else if (index < 0) {
-            return -Math.round(divider.getChildAt(-index).getX());
+            return -xMap[-index];
         }
-        return Math.round(divider.getChildAt(index).getX());
+        return xMap[index];
     }
 
     public int getWidthFromIndexToIndex(int leftIndex, int rightIndex) {
@@ -539,16 +547,16 @@ public class ScheduleView extends CardView implements ClickScrollListener {
 
             dragView = new DragView(getContext(), new Slot(leftIndexUpdated, rightIndexUpdated, movingBlock.getType()));
             dragView.setParentWidth(getWidth());
-            int dragViewWidth = getWidthFromIndexToIndex(movingBlock.getStart(), movingBlock.getEnd());
-            dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
+
             dragArea.addView(dragView);
 
             delete(startingSlot);
         } else {
             dragView = (DragView) dragArea.getChildAt(0);
-            int dragViewWidth = getWidthFromIndexToIndex(movingBlock.getStart(), movingBlock.getEnd());
-            dragView.setLayoutParams(new LinearLayout.LayoutParams(Math.round(dragViewWidth), LayoutParams.MATCH_PARENT));
         }
+        int dragViewWidth = getWidthFromIndexToIndex(movingBlock.getStart(), movingBlock.getEnd());
+
+        dragView.setLayoutParams(new LinearLayout.LayoutParams(dragViewWidth, LayoutParams.MATCH_PARENT));
         dragView.setX(leftX);
         dragView.updateIndexAndText(leftIndexUpdated, rightIndexUpdated);
         dragView.updateDisplayLayout();

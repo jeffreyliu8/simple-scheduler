@@ -99,7 +99,7 @@ public class TouchDetectionView extends View implements GestureDetector.OnGestur
 
     private int findIndexByX(float x) {
         float singleSlotWidth = (float) getWidth() / ScheduleConstant.NUMBER_OF_30_MINS_PER_DAY;
-        return (int) Math.floor(x / singleSlotWidth);
+        return Math.round(x / singleSlotWidth);
     }
 
     @Override
